@@ -159,7 +159,12 @@ static inline int tcf_skbedit_dump(struct sk_buff *skb, struct tc_action *a,
 {
 	unsigned char *b = skb_tail_pointer(skb);
 	struct tcf_skbedit *d = a->priv;
-	struct tc_skbedit opt;
+	struct tc_skbedit opt = {
+	  .index   = d->tcf_index,
+	  .refcnt  = d->tcf_refcnt - ref,
+	  .bindcnt = d->tcf_bindcnt - bind,
+	  .action  = d->tcf_action,
+	};
 	struct tcf_t t;
 
 	opt.index = d->tcf_index;
