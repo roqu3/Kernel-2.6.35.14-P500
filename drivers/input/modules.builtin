@@ -1,0 +1,17 @@
+kernel/drivers/input/input-core.ko
+kernel/drivers/input/evdev.ko
+kernel/drivers/input/keyreset.ko
+kernel/drivers/input/keyboard/atcmd_virtual_kbd.ko
+kernel/drivers/input/misc/gpio_event.ko
+kernel/drivers/input/misc/gpio_matrix.ko
+kernel/drivers/input/misc/gpio_input.ko
+kernel/drivers/input/misc/gpio_output.ko
+kernel/drivers/input/misc/gpio_axis.ko
+kernel/drivers/input/misc/keychord.ko
+kernel/drivers/input/misc/uinput.ko
+kernel/drivers/input/sensor/gp2ap002.ko
+kernel/drivers/input/sensor/kr3dm.ko
+kernel/drivers/input/sensor/kr3dh.ko
+kernel/drivers/input/sensor/ami304.ko
+kernel/drivers/input/touchscreen/mcs6000_ts.ko
+kernel/drivers/input/touchscreen/mcs6000_ts.ko

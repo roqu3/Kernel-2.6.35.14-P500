@@ -1,0 +1,9 @@
+kernel/drivers/mtd/tests/mtd_oobtest.ko
+kernel/drivers/mtd/tests/mtd_pagetest.ko
+kernel/drivers/mtd/tests/mtd_readtest.ko
+kernel/drivers/mtd/tests/mtd_speedtest.ko
+kernel/drivers/mtd/tests/mtd_stresstest.ko
+kernel/drivers/mtd/tests/mtd_subpagetest.ko
+kernel/drivers/mtd/tests/mtd_torturetest.ko
+kernel/drivers/mtd/tests/mtd_nandecctest.ko
+kernel/drivers/mtd/tests/mtd_erasepart.ko

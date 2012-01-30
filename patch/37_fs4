@@ -1,0 +1,28 @@
+commit fe8d12b801f24cf6e160b95e8533bfb956263e63
+Author: Umaro <umaro@narshe.net>
+Date:   Tue Jun 21 22:24:37 2011 +0200
+
+    fs: Use this_cpu_inc_return in buffer.c
+    
+        __this_cpu_inc can create a single instruction with the same effect
+        as the _get_cpu_var(..)++ construct in buffer.c.
+    
+        Cc: Wu Fengguang <fengguang.wu@intel.com>
+        Cc: Christoph Hellwig <hch@lst.de>
+        Acked-by: H. Peter Anvin <hpa@zytor.com>
+        Signed-off-by: Christoph Lameter <cl@linux.com>
+        Signed-off-by: Tejun Heo <tj@kernel.org>
+
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 3371511..5217a99 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -3321,7 +3321,7 @@ static void recalc_bh_state(void)
+ 	int i;
+ 	int tot = 0;
+ 
+-	if (__get_cpu_var(bh_accounting).ratelimit++ < 4096)
++	if (__this_cpu_inc_return(bh_accounting.ratelimit) - 1 < 4096)
+ 		return;
+ 	__this_cpu_write(bh_accounting.ratelimit, 0);
+ 	for_each_online_cpu(i)

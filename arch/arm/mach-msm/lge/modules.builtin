@@ -1,0 +1,3 @@
+kernel/arch/arm/mach-msm/lge/lge_gpio_switch.ko
+kernel/arch/arm/mach-msm/lge/lge_handle_panic.ko
+kernel/arch/arm/mach-msm/lge/lge_ers.ko

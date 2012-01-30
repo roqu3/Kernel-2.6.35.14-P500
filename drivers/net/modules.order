@@ -1,0 +1,3 @@
+kernel/drivers/net/wireless/bcm4325/wireless.ko
+kernel/drivers/net/wireless/libra/librasdioif.ko
+kernel/drivers/net/tun.ko

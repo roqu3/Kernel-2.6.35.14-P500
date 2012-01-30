@@ -1,0 +1,15 @@
+kernel/drivers/scsi/scsi_wait_scan.ko
+kernel/drivers/mtd/tests/mtd_oobtest.ko
+kernel/drivers/mtd/tests/mtd_pagetest.ko
+kernel/drivers/mtd/tests/mtd_readtest.ko
+kernel/drivers/mtd/tests/mtd_speedtest.ko
+kernel/drivers/mtd/tests/mtd_stresstest.ko
+kernel/drivers/mtd/tests/mtd_subpagetest.ko
+kernel/drivers/mtd/tests/mtd_torturetest.ko
+kernel/drivers/mtd/tests/mtd_nandecctest.ko
+kernel/drivers/mtd/tests/mtd_erasepart.ko
+kernel/drivers/net/wireless/bcm4325/wireless.ko
+kernel/drivers/net/wireless/libra/librasdioif.ko
+kernel/drivers/net/tun.ko
+kernel/drivers/input/evbug.ko
+kernel/drivers/media/video/gspca/gspca_main.ko

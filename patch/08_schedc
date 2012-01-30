@@ -1,0 +1,21 @@
+commit 82e64c729c1a5d77adce8bd8b10bbefcbaca688c
+Author: LeeDrOiD <leedroid.lb@gmail.com>
+Date:   Sun May 15 17:51:29 2011 +0100
+
+    Fix: kernel/sched.c missing function in sched_move_task
+
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 1dfbd2f..9f6dba9 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -8369,8 +8369,8 @@ void sched_move_task(struct task_struct *tsk)
+ #endif
+ 
+ #ifdef CONFIG_FAIR_GROUP_SCHED
+-	if (tsk->sched_class->task_move_group)
+-		tsk->sched_class->task_move_group(tsk, on_rq);
++	if (tsk->sched_class->moved_group)
++		tsk->sched_class->moved_group(tsk, on_rq);
+ 	else
+ #endif
+ 		set_task_rq(tsk, task_cpu(tsk));

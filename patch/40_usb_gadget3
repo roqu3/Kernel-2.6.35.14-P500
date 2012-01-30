@@ -1,0 +1,37 @@
+commit b100117531bb12992262ba6cd14cadf76dc1e3c1
+Author: Umaro <umaro@narshe.net>
+Date:   Wed Jun 22 16:55:12 2011 +0200
+
+    USB: gadget: f_mass_storage: dead code removed
+    
+        The ep0req_name was never used in f_mass_storage hence it may
+        be safely removed from the code.  It was a leftover from File
+        Storage Gadget which used it for debug messages.
+    
+        Signed-off-by: Michal Nazarewicz <m.nazarewicz@samsung.com>
+        Cc: David Brownell <dbrownell@users.sourceforge.net>
+        Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+
+diff --git a/drivers/usb/gadget/f_mass_storage.c b/drivers/usb/gadget/f_mass_storage.c
+index f72ec23..0334922 100644
+--- a/drivers/usb/gadget/f_mass_storage.c
++++ b/drivers/usb/gadget/f_mass_storage.c
+@@ -341,8 +341,7 @@ struct fsg_common {
+ 	struct usb_ep		*ep0;		/* Copy of gadget->ep0 */
+ 	struct usb_request	*ep0req;	/* Copy of cdev->req */
+ 	unsigned int		ep0_req_tag;
+-	const char		*ep0req_name;
+-
++	
+ 	struct fsg_buffhd	*next_buffhd_to_fill;
+ 	struct fsg_buffhd	*next_buffhd_to_drain;
+ 	struct fsg_buffhd	buffhds[FSG_NUM_BUFFERS];
+@@ -636,8 +635,6 @@ static int fsg_setup(struct usb_function *f,
+ 
+ 		/* Respond with data/status */
+ 		req->length = min((u16)1, w_length);
+-		fsg->common->ep0req_name =
+-			ctrl->bRequestType & USB_DIR_IN ? "ep0-in" : "ep0-out";
+ 		return ep0_queue(fsg->common);
+ 	}
+ 

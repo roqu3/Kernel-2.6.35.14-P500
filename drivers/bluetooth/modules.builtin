@@ -1,0 +1,3 @@
+kernel/drivers/bluetooth/hci_uart.ko
+kernel/drivers/bluetooth/msm_bt_sleep.ko
+kernel/drivers/bluetooth/bluetooth-power.ko

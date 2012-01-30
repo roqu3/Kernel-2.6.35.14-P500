@@ -1,0 +1,27 @@
+commit 4fc01c2002fd31271a273245e975d72be847186b
+Author: Umaro <umaro@narshe.net>
+Date:   Tue Jun 21 19:21:47 2011 +0200
+
+    msm: timer: Increase write delay on dg_timer
+    
+        Sometimes set_next_event on the dg_timer takes longer than the minimum
+        timer delta, causing debug prints to fire. Increase this timeout to
+        suppress these.
+    
+        CRs-Fixed: 279340
+        Change-Id: I04d22b04ffe7353f44c599369852b96faf9e45a5
+        Signed-off-by: Jeff Ohlstein <johlstei@codeaurora.org>
+
+diff --git a/arch/arm/mach-msm/timer.c b/arch/arm/mach-msm/timer.c
+index dafeb0a..ff1ec99 100644
+--- a/arch/arm/mach-msm/timer.c
++++ b/arch/arm/mach-msm/timer.c
+@@ -607,7 +607,7 @@ static struct msm_clock msm_clocks[] = {
+ 		.regbase = MSM_DGT_BASE,
+ 		.freq = DGT_HZ >> MSM_DGT_SHIFT,
+ 		.shift = MSM_DGT_SHIFT,
+-		.write_delay = 2,
++		.write_delay = 9,
+ 	}
+ };
+ 

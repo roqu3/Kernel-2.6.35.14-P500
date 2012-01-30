@@ -1,0 +1,49 @@
+commit 0f71af304e401e9a7c0988097dbbe25483ee243c
+Author: Umaro <umaro@narshe.net>
+Date:   Tue Jun 21 21:22:21 2011 +0200
+
+    mm: remove likely() from grab_cache_page_write_begin()
+    
+        Running the annotated branch profiler on a box doing average work
+        (firefox, evolution, xchat, distcc farm), the likely() used in
+        grab_cache_page_write_begin() was incorrect most of the time:
+    
+         correct incorrect  %        Function                  File              Line
+         ------- ---------  -        --------                  ----              ----
+         1924262 71332401  97 grab_cache_page_write_begin    filemap.c           2206
+    
+        Adding a trace_printk() and running the function tracer limited to
+        just this function I can see:
+    
+                gconfd-2-2696  [000]  4467.268935: grab_cache_page_write_begin: page=          (null) mapping=ffff8800676a9460 index=7
+                gconfd-2-2696  [000]  4467.268946: grab_cache_page_write_begin <-ext3_write_begin
+                gconfd-2-2696  [000]  4467.268947: grab_cache_page_write_begin: page=          (null) mapping=ffff8800676a9460 index=8
+                gconfd-2-2696  [000]  4467.268959: grab_cache_page_write_begin <-ext3_write_begin
+                gconfd-2-2696  [000]  4467.268960: grab_cache_page_write_begin: page=          (null) mapping=ffff8800676a9460 index=9
+                gconfd-2-2696  [000]  4467.268972: grab_cache_page_write_begin <-ext3_write_begin
+                gconfd-2-2696  [000]  4467.268973: grab_cache_page_write_begin: page=          (null) mapping=ffff8800676a9460 index=10
+                gconfd-2-2696  [000]  4467.268991: grab_cache_page_write_begin <-ext3_write_begin
+                gconfd-2-2696  [000]  4467.268992: grab_cache_page_write_begin: page=          (null) mapping=ffff8800676a9460 index=11
+                gconfd-2-2696  [000]  4467.269005: grab_cache_page_write_begin <-ext3_write_begin
+    
+        Which shows that a lot of calls from ext3_write_begin will result in the
+        page returned by "find_lock_page" will be NULL.
+    
+        Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+        Acked-by: Nick Piggin <npiggin@kernel.dk>
+        Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+        Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 183d2d4..e27493a 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -2200,7 +2200,7 @@ struct page *grab_cache_page_write_begin(struct address_space *mapping,
+ 		gfp_notmask = __GFP_FS;
+ repeat:
+ 	page = find_lock_page(mapping, index);
+-	if (likely(page))
++	if (page)
+ 		return page;
+ 
+ 	page = __page_cache_alloc(mapping_gfp_mask(mapping) & ~gfp_notmask);

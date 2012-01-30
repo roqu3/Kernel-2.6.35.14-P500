@@ -1,0 +1,3 @@
+kernel/drivers/usb/gadget/msm72k_udc.ko
+kernel/drivers/usb/gadget/f_ecm.ko
+kernel/drivers/usb/gadget/u_ether.ko
