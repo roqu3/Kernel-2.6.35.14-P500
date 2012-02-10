@@ -1,5 +1,0 @@
-kernel/drivers/media/video/videodev.ko
-kernel/drivers/media/video/v4l2-int-device.ko
-kernel/drivers/media/video/v4l2-common.ko
-kernel/drivers/media/video/v4l1-compat.ko
-kernel/drivers/media/video/ir-kbd-i2c.ko

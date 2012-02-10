@@ -1,3 +1,0 @@
-kernel/drivers/leds/led-class.ko
-kernel/drivers/leds/leds-cpld.ko
-kernel/drivers/leds/leds-msm-pmic.ko
