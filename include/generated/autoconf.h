@@ -1,7 +1,7 @@
 /*
  * Automatically generated C config: don't edit
  * Linux kernel version: 2.6.35.14
- * Fri Feb 10 23:04:51 2012
+ * Sat Feb 11 00:10:14 2012
  */
 #define AUTOCONF_INCLUDED
 #define CONFIG_RING_BUFFER 1
@@ -530,7 +530,7 @@
 #define CONFIG_COMMON_CLKDEV 1
 #define CONFIG_MSM_CAMERA 1
 #define CONFIG_COMPAT_BRK 1
-#define CONFIG_LOCALVERSION "-VId"
+#define CONFIG_LOCALVERSION "-VIe"
 #define CONFIG_RADIO_ADAPTERS 1
 #define CONFIG_CRYPTO 1
 #define CONFIG_DEFAULT_MMAP_MIN_ADDR 4096
