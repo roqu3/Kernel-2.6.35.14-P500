@@ -47,12 +47,14 @@ static int lowmem_adj[6] = {
 };
 static int lowmem_adj_size = 4;
 static size_t lowmem_minfree[6] = {
-	3 * 512,	/* 6MB */
-	2 * 1024,	/* 8MB */
-	4 * 1024,	/* 16MB */
-	16 * 1024,	/* 64MB */
+	2569,
+	3072,
+	6144,
+	15360,
+	17920,
+	20480
 };
-static int lowmem_minfree_size = 4;
+static int lowmem_minfree_size = 6;
 
 static struct task_struct *lowmem_deathpending;
 static unsigned long lowmem_deathpending_timeout;
@@ -123,6 +125,10 @@ static int lowmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
 		   break;
 		 }
 	}
+#ifdef SEC_ADJUST_LMK
+	if (min_adj == OOM_ADJUST_MAX + 1)
+		return 0;
+#endif
 	if (nr_to_scan > 0)
 		lowmem_print(3, "lowmem_shrink %d, %x, ofree %d %d, ma %d\n",
 			     nr_to_scan, gfp_mask, other_free, other_file,
@@ -218,8 +224,9 @@ static void __exit lowmem_exit(void)
 module_param_named(cost, lowmem_shrinker.seeks, int, S_IRUGO | S_IWUSR);
 module_param_array_named(adj, lowmem_adj, int, &lowmem_adj_size,
 			 S_IRUGO | S_IWUSR);
-module_param_array_named(minfree, lowmem_minfree, uint, &lowmem_minfree_size,
-			 S_IRUGO | S_IWUSR);
+//module_param_array_named(minfree, lowmem_minfree, uint, &lowmem_minfree_size,
+//			 S_IRUGO | S_IWUSR);
+module_param_array_named(minfree, lowmem_minfree, uint, &lowmem_minfree_size, 00444);
 module_param_named(debug_level, lowmem_debug_level, uint, S_IRUGO | S_IWUSR);
 
 module_init(lowmem_init);
