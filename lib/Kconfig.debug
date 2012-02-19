@@ -610,7 +610,7 @@ config DEBUG_BUGVERBOSE
 	depends on BUG
 	depends on ARM || AVR32 || M32R || M68K || SPARC32 || SPARC64 || \
 		   FRV || SUPERH || GENERIC_BUG || BLACKFIN || MN10300
-	default y
+	default n
 	help
 	  Say Y here to make BUG() panics output the file name and line number
 	  of the BUG call as well as the EIP and oops trace.  This aids
@@ -632,6 +632,7 @@ config DEBUG_INFO
 config DEBUG_VM
 	bool "Debug VM"
 	depends on DEBUG_KERNEL
+	default n
 	help
 	  Enable this to turn on extended checks in the virtual-memory system
           that may impact performance.
