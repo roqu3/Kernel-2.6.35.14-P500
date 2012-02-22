@@ -53,7 +53,7 @@ static void mcs6000_early_suspend(struct early_suspend *h);
 static void mcs6000_late_resume(struct early_suspend *h);
 #endif
 
-//#define TS_SAMPLERATE_HZ 100 /* touchscreen samplerate [Hz]*/
+#define TS_SAMPLERATE_HZ 50 /* touchscreen samplerate [Hz]*/
 #define	TS_SENSE_CH_CNT	21
 
 #define MCS6000_I2C_TS_NAME		"touch_mcs6000"
@@ -232,10 +232,8 @@ static void mcs6000_ts_work_func(struct work_struct *work)
 	  if ( i2c_smbus_read_i2c_block_data(ts->client, MCS6000_TS_INPUT_INFO, READ_NUM, read_buf) < 0)
 	    {
 	      printk(KERN_ERR "%s touch ic read error\n", __FUNCTION__);
-	      //retry at next sample 
-		//testeando "msecs_to_jiffies(ts->poll_interval)" en lugar de "(HZ / TS_SAMPLERATE_HZ)"
-	      queue_delayed_work(mcs6000_wq, &ts->work, msecs_to_jiffies(ts->poll_interval));
-//	      queue_delayed_work(mcs6000_wq, &ts->work, (HZ / TS_SAMPLERATE_HZ));
+	      //retry at next sample
+	      queue_delayed_work(mcs6000_wq, &ts->work, (HZ / TS_SAMPLERATE_HZ));
 	    }
 
 
@@ -265,8 +263,7 @@ static void mcs6000_ts_work_func(struct work_struct *work)
 	              input_sync(ts->input_dev);
 	            }
 	        }
-	      queue_delayed_work(mcs6000_wq, &ts->work, msecs_to_jiffies(ts->poll_interval));
-//	      queue_delayed_work(mcs6000_wq, &ts->work, (HZ / TS_SAMPLERATE_HZ));
+	      queue_delayed_work(mcs6000_wq, &ts->work, (HZ / TS_SAMPLERATE_HZ));
 	    }
 	  else   /* touch released case */
 	    {
@@ -290,8 +287,7 @@ static irqreturn_t mcs6000_ts_irq_handler(int irq, void *dev_id)
 		disable_irq_nosync(ts->client->irq);
 		ts->irq_sync--;
 		//queue_work(mcs6000_wq, &ts->work);
-//		queue_delayed_work(mcs6000_wq, &ts->work, (HZ / TS_SAMPLERATE_HZ));
-		queue_delayed_work(mcs6000_wq, &ts->work, msecs_to_jiffies(ts->poll_interval));
+		queue_delayed_work(mcs6000_wq, &ts->work, (HZ / TS_SAMPLERATE_HZ));
 	}
 	else  {
 		printk(KERN_INFO "mcs6000_ts_irq_handler: check int gpio level\n");
