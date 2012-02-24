@@ -53,7 +53,7 @@ static void mcs6000_early_suspend(struct early_suspend *h);
 static void mcs6000_late_resume(struct early_suspend *h);
 #endif
 
-#define TS_SAMPLERATE_HZ 50 /* touchscreen samplerate [Hz]*/
+#define TS_SAMPLERATE_HZ 70 /* touchscreen samplerate [Hz]*/
 #define	TS_SENSE_CH_CNT	21
 
 #define MCS6000_I2C_TS_NAME		"touch_mcs6000"
