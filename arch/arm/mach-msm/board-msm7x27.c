@@ -1917,7 +1917,7 @@ static void __init msm7x2x_init(void)
 #endif
 
 	if (cpu_is_msm7x27())
-		msm7x2x_clock_data.max_axi_khz = 200000;
+		msm7x2x_clock_data.max_axi_khz = 422400;
 
 	msm_acpu_clock_init(&msm7x2x_clock_data);
 
@@ -1926,7 +1926,7 @@ static void __init msm7x2x_init(void)
 	/* OEMs may modify the value at their discretion for performance */
 	/* The appropriate maximum replacement for 160000 is: */
 	/* clk_get_max_axi_khz() */
-	kgsl_pdata.high_axi_3d = 160000;
+	kgsl_pdata.high_axi_3d = clk_get_max_axi_khz();
 
 	/* 7x27 doesn't allow graphics clocks to be run asynchronously to */
 	/* the AXI bus */
