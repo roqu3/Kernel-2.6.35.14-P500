@@ -293,7 +293,7 @@ static struct mmc_platform_data msm7x2x_sdc1_data = {
 	.irq_flags		= IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
 	.mmc_bus_width	= MMC_CAP_4_BIT_DATA,
 #else
-	.ocr_mask		= MMC_VDD_20_21,
+	.ocr_mask		= MMC_VDD_28_29,
 	.translate_vdd	= msm_sdcc_setup_power,
 	.mmc_bus_width  = MMC_CAP_4_BIT_DATA,
 #endif	
