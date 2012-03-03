@@ -47,6 +47,20 @@ static inline struct autogroup *autogroup_kref_get(struct autogroup *ag)
 	return ag;
 }
 
+static inline struct autogroup *autogroup_task_get(struct task_struct *p)
+{
+	struct autogroup *ag;
+	unsigned long flags;
+
+	if (!lock_task_sighand(p, &flags))
+		return autogroup_kref_get(&autogroup_default);
+
+	ag = autogroup_kref_get(p->signal->autogroup);
+	unlock_task_sighand(p, &flags);
+
+	return ag;
+}
+
 static inline struct autogroup *autogroup_create(void)
 {
 	struct autogroup *ag = kzalloc(sizeof(*ag), GFP_KERNEL);
@@ -152,11 +166,7 @@ EXPORT_SYMBOL(sched_autogroup_detach);
 
 void sched_autogroup_fork(struct signal_struct *sig)
 {
-	struct sighand_struct *sighand = current->sighand;
-
-	spin_lock(&sighand->siglock);
-	sig->autogroup = autogroup_kref_get(current->signal->autogroup);
-	spin_unlock(&sighand->siglock);
+	sig->autogroup = autogroup_task_get(current);
 }
 
 void sched_autogroup_exit(struct signal_struct *sig)
