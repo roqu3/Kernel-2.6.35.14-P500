@@ -237,10 +237,8 @@ static uint32_t msm_sdcc_setup_power(struct device *dv, unsigned int vdd)
 			     MPP_CFG(MPP_DLOGIC_LVL_MSMP,
 			     MPP_DLOGIC_OUT_CTRL_HIGH));
 		} else {
-#ifdef CONFIG_MMC_MSM_CARD_HW_DETECTION
-			rc = vreg_set_level(vreg_mmc, VREG_SD_LEVEL);
-#else		
-			rc = vreg_set_level(vreg_mmc, 2850);
+#ifdef CONFIG_MMC_MSM_CARD_HW_DETECTION	
+			rc = vreg_set_level(vreg_mmc, 2050);
 #endif
 			if (!rc)
 				rc = vreg_enable(vreg_mmc);
@@ -270,7 +268,7 @@ static unsigned int bcm432x_sdcc_wlan_slot_status(struct device *dev)
 }
 
 static struct mmc_platform_data bcm432x_sdcc_wlan_data = {
-    .ocr_mask   	= MMC_VDD_30_31,
+    .ocr_mask   	= MMC_VDD_20_21,
 	.translate_vdd	= msm_sdcc_setup_power,
     .status     	= bcm432x_sdcc_wlan_slot_status,
 	.status_irq		= MSM_GPIO_TO_INT(CONFIG_BCM4325_GPIO_WL_RESET),
@@ -286,16 +284,12 @@ static struct mmc_platform_data bcm432x_sdcc_wlan_data = {
 
 static struct mmc_platform_data msm7x2x_sdc1_data = {
 #ifdef CONFIG_MMC_MSM_CARD_HW_DETECTION
-	.ocr_mask		= MMC_VDD_30_31,
+	.ocr_mask		= MMC_VDD_20_21,
 	.translate_vdd	= msm_sdcc_setup_power,
 	.status 		= thunderg_sdcc_slot_status,
 	.status_irq 	= MSM_GPIO_TO_INT(GPIO_MMC_COVER_DETECT),
 	.irq_flags		= IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
 	.mmc_bus_width	= MMC_CAP_4_BIT_DATA,
-#else
-	.ocr_mask		= MMC_VDD_28_29,
-	.translate_vdd	= msm_sdcc_setup_power,
-	.mmc_bus_width  = MMC_CAP_4_BIT_DATA,
 #endif	
 	.msmsdcc_fmin	= 144000,
 	.msmsdcc_fmid	= 24576000,
