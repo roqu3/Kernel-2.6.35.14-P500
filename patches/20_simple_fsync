@@ -1,0 +1,43 @@
+commit 87d6f17f5002e9e7dadc59961eed824ae4309009
+Author: Umaro <umaro@narshe.net>
+Date:   Tue Jun 21 20:16:10 2011 +0200
+
+    fs: simple fsync race fix
+    
+        It is incorrect to test inode dirty bits without participating in the inode
+        writeback protocol. Inode writeback sets I_SYNC and clears I_DIRTY_?, then
+        writes out the particular bits, then clears I_SYNC when it is done. BTW. it
+        may not completely write all pages out, so I_DIRTY_PAGES would get set
+        again.
+    
+        This is a standard pattern used throughout the kernel's writeback caches
+        (I_SYNC ~= I_WRITEBACK, if that makes it clearer).
+    
+        And so it is not possible to determine an inode's dirty status just by
+        checking I_DIRTY bits. Especially not for the purpose of data integrity
+        syncs.
+    
+        Missing the check for these bits means that fsync can complete while
+        writeback to the inode is underway. Inode writeback functions get this
+        right, so call into them rather than try to shortcut things by testing
+        dirty state improperly.
+    
+        Signed-off-by: Nick Piggin <npiggin@kernel.dk>
+
+diff --git a/fs/libfs.c b/fs/libfs.c
+index dcaf972..286d20b 100644
+--- a/fs/libfs.c
++++ b/fs/libfs.c
+@@ -943,11 +943,7 @@ int generic_file_fsync(struct file *file, int datasync)
+ 	int ret;
+ 
+ 	ret = sync_mapping_buffers(inode->i_mapping);
+-	if (!(inode->i_state & I_DIRTY))
+-		return ret;
+-	if (datasync && !(inode->i_state & I_DIRTY_DATASYNC))
+-		return ret;
+-
++	
+ 	err = sync_inode(inode, &wbc);
+ 	if (ret == 0)
+ 		ret = err;

@@ -1,0 +1,34 @@
+commit c9d02669f40716404a3fa8b69178123550c08ff0
+Author: Kevin Cernekee <cernekee@gmail.com>
+Date:   Mon Sep 20 22:32:10 2010 +0200
+
+    PM: Fix signed/unsigned warning in dpm_show_time()
+    
+    Seen on MIPS32, gcc 4.4.3, 2.6.36-rc4:
+    
+    drivers/base/power/main.c: In function 'dpm_show_time':
+    drivers/base/power/main.c:415: warning: comparison of distinct pointer types lacks a cast
+    
+    do_div() takes unsigned parameters:
+    
+    uint32_t do_div(uint64_t *n, uint32_t base);
+    
+    Using an unsigned variable for usecs64 should not cause any problems,
+    because calltime >= starttime .
+    
+    Signed-off-by: Kevin Cernekee <cernekee@gmail.com>
+    Signed-off-by: Rafael J. Wysocki <rjw@sisk.pl>
+
+diff --git a/drivers/base/power/main.c b/drivers/base/power/main.c
+index 05b50ec..4c2d7a5 100644
+--- a/drivers/base/power/main.c
++++ b/drivers/base/power/main.c
+@@ -429,7 +429,7 @@ static void pm_dev_err(struct device *dev, pm_message_t state, char *info,
+ static void dpm_show_time(ktime_t starttime, pm_message_t state, char *info)
+ {
+ 	ktime_t calltime;
+-	s64 usecs64;
++	u64 usecs64;
+ 	int usecs;
+ 
+ 	calltime = ktime_get();

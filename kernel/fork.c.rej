@@ -1,0 +1,22 @@
+--- kernel/fork.c	2010-11-20 21:28:31.890000072 -0500
++++ kernel/fork.c	2010-11-20 21:32:52.044000072 -0500
+@@ -173,8 +173,10 @@
+ 
+ static inline void put_signal_struct(struct signal_struct *sig)
+ {
+-	if (atomic_dec_and_test(&sig->sigcnt))
++	if (atomic_dec_and_test(&sig->sigcnt)) {
++		sched_autogroup_exit(sig);
+ 		free_signal_struct(sig);
++	}
+ }
+ 
+ void __put_task_struct(struct task_struct *tsk)
+@@ -900,6 +902,7 @@
+ 	posix_cpu_timers_init_group(sig);
+ 
+ 	tty_audit_fork(sig);
++	sched_autogroup_fork(sig);
+ 
+ 	sig->oom_adj = current->signal->oom_adj;
+ 

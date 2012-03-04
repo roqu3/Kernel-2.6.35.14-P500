@@ -1,0 +1,38 @@
+commit b400768f878eddd91c90313fae06cac11b47986e
+Author: Umaro <umaro@narshe.net>
+Date:   Tue Jun 21 19:02:18 2011 +0200
+
+    msm: sirc: fix out of bounds error
+    
+        The irq_handler function may exceed sirc_reg_table while checking for
+        the correct cascaded interrupt causing out of bound accesses.
+    
+        Return after printing an error if this happens.
+    
+        Signed-off-by: Abhijeet Dharmapurikar <adharmap@codeaurora.org>
+
+diff --git a/arch/arm/mach-msm/sirc.c b/arch/arm/mach-msm/sirc.c
+index 74e0686..118b2a2 100644
+--- a/arch/arm/mach-msm/sirc.c
++++ b/arch/arm/mach-msm/sirc.c
+@@ -1,6 +1,6 @@
+ /* linux/arch/arm/mach-msm/irq.c
+  *
+- * Copyright (c) 2009 QUALCOMM Incorporated.
++ * Copyright (c) 2009-2010 Code Aurora Forum, All rights reserved.
+  * Copyright (C) 2009 Google, Inc.
+  *
+  * This software is licensed under the terms of the GNU General Public
+@@ -152,6 +152,12 @@ static void sirc_irq_handler(unsigned int irq, struct irq_desc *desc)
+ 		(sirc_reg_table[reg].cascade_irq != irq))
+ 		reg++;
+ 
++	if (reg == ARRAY_SIZE(sirc_reg_table)) {
++		printk(KERN_ERR "%s: incorrect irq %d called\n",
++			__func__, irq);
++		return;
++	}
++
+ 	status = readl(sirc_reg_table[reg].int_status);
+ 	status &= SIRC_MASK;
+ 	if (status == 0)

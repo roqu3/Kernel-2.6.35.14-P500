@@ -1,0 +1,30 @@
+commit 0ad1ad6cd6081b73d9060c216c7823cab3be5afe
+Author: Umaro <umaro@narshe.net>
+Date:   Tue Jun 21 19:16:25 2011 +0200
+
+    cgroup: fix cpuset permission check
+    
+        The permission check code added by "cgroup: Add generic cgroup subsystem
+        permission checks" does not build and also leaves a variable uninitialized.
+        Fix it.
+    
+        Change-Id: I8009d6315527725d45b20792b7cd74aedc9bff44
+        Signed-off-by: Rabin Vincent <rabin.vincent@stericsson.com>
+        Signed-off-by: Christian Bejram <christian.bejram@stericsson.com>
+
+diff --git a/kernel/cpuset.c b/kernel/cpuset.c
+index a358231..8b741d4 100644
+--- a/kernel/cpuset.c
++++ b/kernel/cpuset.c
+@@ -1383,9 +1383,10 @@ static int cpuset_can_attach(struct cgroup_subsys *ss, struct cgroup *cont,
+ 	int ret;
+ 	struct cpuset *cs = cgroup_cs(cont);
+ 
+-	if ((current != task) && (!capable(CAP_SYS_ADMIN))) {
++	if ((current != tsk) && (!capable(CAP_SYS_ADMIN))) {
+ 		const struct cred *cred = current_cred(), *tcred;
+ 
++		tcred = __task_cred(tsk);
+ 		if (cred->euid != tcred->uid && cred->euid != tcred->suid)
+ 			return -EPERM;
+ 	}

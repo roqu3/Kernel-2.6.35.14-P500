@@ -1,0 +1,53 @@
+commit d629198b3f8ae0dba2533cfec42b1ead0a06850d
+Author: Umaro <umaro@narshe.net>
+Date:   Tue Jun 21 19:32:50 2011 +0200
+
+    msm: smd: remove extra outgoing interrupts
+    
+        Remove interrupts which are sent by default in response to an event on an
+        open SMD channel.  An interrupt is already sent if necessary according to
+        the SMD protocol, so the default interrupts serve no purpose and can cause
+        performance degradation.
+    
+        Change-Id: I4bbaf6cd12ef504b2452ece570af120c96dc0bc5
+        Signed-off-by: Jeffrey Hugo <jhugo@codeaurora.org>
+
+diff --git a/arch/arm/mach-msm/smd.c b/arch/arm/mach-msm/smd.c
+index 205c554..ff32a8f 100644
+--- a/arch/arm/mach-msm/smd.c
++++ b/arch/arm/mach-msm/smd.c
+@@ -517,7 +517,6 @@ static void handle_smd_irq(struct list_head *list, void (*notify)(void))
+ {
+ 	unsigned long flags;
+ 	struct smd_channel *ch;
+-	int do_notify = 0;
+ 	unsigned ch_flags;
+ 	unsigned tmp;
+ #ifdef CONFIG_BUILD_CIQ
+@@ -532,17 +531,14 @@ static void handle_smd_irq(struct list_head *list, void (*notify)(void))
+ 			if (ch->recv->fHEAD) {
+ 				ch->recv->fHEAD = 0;
+ 				ch_flags |= 1;
+-				do_notify |= 1;
+ 			}
+ 			if (ch->recv->fTAIL) {
+ 				ch->recv->fTAIL = 0;
+ 				ch_flags |= 2;
+-				do_notify |= 1;
+ 			}
+ 			if (ch->recv->fSTATE) {
+ 				ch->recv->fSTATE = 0;
+ 				ch_flags |= 4;
+-				do_notify |= 1;
+ 			}
+ 		}
+ 		tmp = ch->recv->state;
+@@ -553,8 +549,6 @@ static void handle_smd_irq(struct list_head *list, void (*notify)(void))
+ 			ch->notify(ch->priv, SMD_EVENT_DATA);
+ 		}
+ 	}
+-	if (do_notify)
+-		notify();
+ 	spin_unlock_irqrestore(&smd_lock, flags);
+ 	do_smd_probe();
+ }

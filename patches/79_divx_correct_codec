@@ -1,0 +1,26 @@
+commit 5527378f5ef07975151d57b45b0448b46c683ca6
+Author: francisco <francisco@francisco.(none)>
+Date:   Sun Sep 18 04:21:30 2011 +0100
+
+    vidc: vdec: Set correct divx codec type
+
+diff --git a/drivers/video/msm/vidc/common/dec/vdec.c b/drivers/video/msm/vidc/common/dec/vdec.c
+index 537e6d8..013eab2 100644
+--- a/drivers/video/msm/vidc/common/dec/vdec.c
++++ b/drivers/video/msm/vidc/common/dec/vdec.c
+@@ -450,9 +450,15 @@ static u32 vid_dec_set_codec(struct video_client_ctx *client_ctx,
+ 	case VDEC_CODECTYPE_DIVX_3:
+ 		codec.codec = VCD_CODEC_DIVX_3;
+ 		break;
++	case VDEC_CODECTYPE_DIVX_4:
++    		codec.codec = VCD_CODEC_DIVX_4;
++    		break;
+ 	case VDEC_CODECTYPE_DIVX_5:
+ 		codec.codec = VCD_CODEC_DIVX_5;
+ 		break;
++	case VDEC_CODECTYPE_DIVX_6:
++                codec.codec = VCD_CODEC_DIVX_6;
++                break;
+ 	case VDEC_CODECTYPE_XVID:
+ 		codec.codec = VCD_CODEC_XVID;
+ 		break;
