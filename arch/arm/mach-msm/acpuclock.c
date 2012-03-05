@@ -243,6 +243,7 @@ static struct clkctl_acpu_speed pll0_960_pll1_245_pll2_1200[] = {
 //	{ 1, 825600, ACPU_PLL_0, 4, 0, 412800, 1, 7, 200000 },
 //	{ 1, 844800, ACPU_PLL_0, 4, 0, 422400, 1, 7, 200000 },
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0, 0, 0}, {0, 0, 0} }
+#endif
 };
 
 /* 7x27 normal with CDMA-only modem - PLL0 and PLL1 swapped */

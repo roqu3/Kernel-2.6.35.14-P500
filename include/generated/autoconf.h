@@ -1,11 +1,7 @@
 /*
  * Automatically generated C config: don't edit
  * Linux kernel version: 2.6.35.14
-<<<<<<< HEAD
- * Sun Mar  4 18:53:06 2012
-=======
- * Wed Feb 29 22:15:43 2012
->>>>>>> ec4749ba469bb6ff6f838e27ac83c00bba605c69
+ * Mon Mar  5 14:53:49 2012
  */
 #define AUTOCONF_INCLUDED
 #define CONFIG_RING_BUFFER 1
@@ -533,11 +529,7 @@
 #define CONFIG_COMMON_CLKDEV 1
 #define CONFIG_MSM_CAMERA 1
 #define CONFIG_COMPAT_BRK 1
-<<<<<<< HEAD
-#define CONFIG_LOCALVERSION "-taroq-VI"
-=======
-#define CONFIG_LOCALVERSION "-IX"
->>>>>>> ec4749ba469bb6ff6f838e27ac83c00bba605c69
+#define CONFIG_LOCALVERSION "-taroq-v1"
 #define CONFIG_RADIO_ADAPTERS 1
 #define CONFIG_CRYPTO 1
 #define CONFIG_DEFAULT_MMAP_MIN_ADDR 4096
@@ -689,7 +681,6 @@
 #define CONFIG_CPU_FREQ_MIN_TICKS 10
 #define CONFIG_BASE_SMALL 0
 #define CONFIG_CRYPTO_BLKCIPHER2 1
-#define CONFIG_FILE_SYNC_DISABLE 1
 #define CONFIG_PROC_FS 1
 #define CONFIG_MTD_BLOCK 1
 #define CONFIG_RC_MAP 1
