@@ -290,13 +290,6 @@ static struct mmc_platform_data msm7x2x_sdc1_data = {
 	.status_irq 	= MSM_GPIO_TO_INT(GPIO_MMC_COVER_DETECT),
 	.irq_flags		= IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
 	.mmc_bus_width	= MMC_CAP_4_BIT_DATA,
-<<<<<<< HEAD
-=======
-#else
-	.ocr_mask		= MMC_VDD_20_21,
-	.translate_vdd	= msm_sdcc_setup_power,
-	.mmc_bus_width  = MMC_CAP_4_BIT_DATA,
->>>>>>> ec4749ba469bb6ff6f838e27ac83c00bba605c69
 #endif	
 	.msmsdcc_fmin	= 144000,
 	.msmsdcc_fmid	= 24576000,
