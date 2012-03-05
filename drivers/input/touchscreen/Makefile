@@ -60,3 +60,6 @@ obj-$(CONFIG_TOUCHSCREEN_MCS7000)	+= mcs7000_ts.o
 obj-$(CONFIG_TOUCHSCREEN_CY8C_TS)	+= cy8c_ts.o
 obj-$(CONFIG_TOUCHSCREEN_CYTTSP_I2C)       += cyttsp-i2c.o
 obj-$(CONFIG_TOUCHSCREEN_MCS6000)	+= mcs6000_ts.o
+
+# Ignore warnings to prevent build breaks when using gcc 4.5.0
+CFLAGS_REMOVE_mcs6000_ts.o = -Werror

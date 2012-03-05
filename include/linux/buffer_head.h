@@ -230,14 +230,7 @@ int block_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf,
 void block_sync_page(struct page *);
 sector_t generic_block_bmap(struct address_space *, sector_t, get_block_t *);
 int block_truncate_page(struct address_space *, loff_t, get_block_t *);
-#ifdef CONFIG_FILE_SYNC_DISABLE
-static inline int file_fsync(struct file *filp, int datasync)
-{
-  return 0;
-}
-#else
-int file_fsync(struct file *filp, int datasync);
-#endif
+int file_fsync(struct file *, int);
 int nobh_write_begin_newtrunc(struct file *, struct address_space *,
 				loff_t, unsigned, unsigned,
 				struct page **, void **, get_block_t*);

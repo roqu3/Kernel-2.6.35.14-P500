@@ -47,18 +47,6 @@ source "fs/nilfs2/Kconfig"
 
 endif # BLOCK
 
-config FILE_SYNC_DISABLE
-  bool "Disable single file sync (EXPERIMENTAL)"
-  depends on EXPERIMENTAL
-  default y
-  help
-    This option disables per-file sync. Filesystem buffers will be
-    flushed all at once by the kernel or by calling the sync() syscall.
-
-    WARNING: enabling this option may cause loss of data!!!
-
-    Answer N if unsure.
-
 config FILE_LOCKING
 	bool "Enable POSIX file locking API" if EMBEDDED
 	default y

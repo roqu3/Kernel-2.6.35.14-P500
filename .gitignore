@@ -40,6 +40,7 @@ vmlinux
 System.map
 Module.markers
 Module.symvers
+modules.builtin
 !.gitignore
 !.mailmap
 
