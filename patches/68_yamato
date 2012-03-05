@@ -1,0 +1,18 @@
+X-Git-Url: https://www.codeaurora.org/gitweb/quic/le/?p=kernel%2Fmsm.git;a=blobdiff_plain;f=drivers%2Fgpu%2Fmsm%2Fkgsl_yamato.c;h=24de56f3fd218e71a014c237ec85f7ce4e26ae4a;hp=19d51275c5dc8e7a88c6eaac4e15b8b32dae6fe3;hb=58c29e65c12af18248d246523ba01479d6a2de4d;hpb=955ffdb02117e292cbd72406eef845874cf78ba7
+
+diff --git a/drivers/gpu/msm/kgsl_yamato.c b/drivers/gpu/msm/kgsl_yamato.c
+index 19d5127..24de56f 100644
+--- a/drivers/gpu/msm/kgsl_yamato.c
++++ b/drivers/gpu/msm/kgsl_yamato.c
+@@ -781,9 +781,9 @@ static int kgsl_yamato_start(struct kgsl_device *device, unsigned int init_ram)
+ 		kgsl_yamato_regwrite(device, REG_RBBM_SOFT_RESET, 0x00000001);
+ 
+ 	/* The core is in an indeterminate state until the reset completes
+-	 * after 50ms.
++	 * after 10ms.
+ 	 */
+-	msleep(50);
++	usleep_range(10000, 15000);
+ 
+ 	kgsl_yamato_regwrite(device, REG_RBBM_SOFT_RESET, 0x00000000);
+ 

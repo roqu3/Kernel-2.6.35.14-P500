@@ -1,0 +1,26 @@
+commit 2111366061c4b55e8de71ff56c4004aec04278c7
+Author: Tracey Dent <tdent48227@gmail.com>
+Date:   Thu Nov 25 23:41:29 2010 +0100
+
+    PM: Use proper ccflag flag in kernel/power/Makefile
+    
+    Use the ccflags-$ flag instead of EXTRA_CFLAGS because EXTRA_CFLAGS is
+    deprecated and should now be switched.  According to
+    (documentation/kbuild/makefiles.txt).
+    
+    Signed-off-by: Tracey Dent <tdent48227@gmail.com>
+    Signed-off-by: Rafael J. Wysocki <rjw@sisk.pl>
+
+diff --git a/kernel/power/Makefile b/kernel/power/Makefile
+index b9c8246..1b60eae 100644
+--- a/kernel/power/Makefile
++++ b/kernel/power/Makefile
+@@ -1,7 +1,4 @@
+-
+-ifeq ($(CONFIG_PM_DEBUG),y)
+-EXTRA_CFLAGS	+=	-DDEBUG
+-endif
++ccflags-$(CONFIG_PM_DEBUG)	:=	-DDEBUG
+ 
+ obj-$(CONFIG_PM)		+= main.o
+ obj-$(CONFIG_PM_SLEEP)		+= console.o

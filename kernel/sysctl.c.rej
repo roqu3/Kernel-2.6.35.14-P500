@@ -1,0 +1,20 @@
+--- kernel/sysctl.c	2010-11-20 21:28:31.885000072 -0500
++++ kernel/sysctl.c	2010-11-20 21:32:52.045000072 -0500
+@@ -382,6 +382,17 @@
+ 		.mode		= 0644,
+ 		.proc_handler	= proc_dointvec,
+ 	},
++#ifdef CONFIG_SCHED_AUTOGROUP
++	{
++		.procname	= "sched_autogroup_enabled",
++		.data		= &sysctl_sched_autogroup_enabled,
++		.maxlen		= sizeof(unsigned int),
++		.mode		= 0644,
++		.proc_handler	= proc_dointvec,
++		.extra1		= &zero,
++		.extra2		= &one,
++	},
++#endif
+ #ifdef CONFIG_PROVE_LOCKING
+ 	{
+ 		.procname	= "prove_locking",

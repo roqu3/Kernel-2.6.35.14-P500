@@ -1,0 +1,523 @@
+commit 642374ac913e78b407227b2f23c98932227c1e02
+Author: franciscofranco <franciscofranco.1990@gmail.com>
+Date:   Fri Sep 23 01:29:39 2011 +0100
+
+    Ck2 patch
+
+diff --git a/include/linux/mm_inline.h b/include/linux/mm_inline.h
+index 8835b87..eaee860 100644
+--- a/include/linux/mm_inline.h
++++ b/include/linux/mm_inline.h
+@@ -20,14 +20,24 @@ static inline int page_is_file_cache(struct page *page)
+ }
+ 
+ static inline void
+-add_page_to_lru_list(struct zone *zone, struct page *page, enum lru_list l)
++__add_page_to_lru_list(struct zone *zone, struct page *page, enum lru_list l, int tail)
+ {
+-	list_add(&page->lru, &zone->lru[l].list);
++	/* See if this should be added to the tail of this lru list */
++  	if (tail)
++    		list_add_tail(&page->lru, &zone->lru[l].list);
++  	else
++    		list_add(&page->lru, &zone->lru[l].list);
+ 	__inc_zone_state(zone, NR_LRU_BASE + l);
+ 	mem_cgroup_add_lru_list(page, l);
+ }
+ 
+ static inline void
++add_page_to_lru_list(struct zone *zone, struct page *page, enum lru_list l)
++{
++  	__add_page_to_lru_list(zone, page, l, 0);
++}
++
++static inline void
+ del_page_from_lru_list(struct zone *zone, struct page *page, enum lru_list l)
+ {
+ 	list_del(&page->lru);
+diff --git a/include/linux/mmzone.h b/include/linux/mmzone.h
+index 443011c..802af8d 100644
+--- a/include/linux/mmzone.h
++++ b/include/linux/mmzone.h
+@@ -15,6 +15,7 @@
+ #include <linux/seqlock.h>
+ #include <linux/nodemask.h>
+ #include <linux/pageblock-flags.h>
++#include <linux/timer.h>
+ #include <generated/bounds.h>
+ #include <asm/atomic.h>
+ #include <asm/page.h>
+@@ -159,12 +160,14 @@ enum zone_watermarks {
+ 	WMARK_MIN,
+ 	WMARK_LOW,
+ 	WMARK_HIGH,
++	WMARK_LOTS,
+ 	NR_WMARK
+ };
+ 
+ #define min_wmark_pages(z) (z->watermark[WMARK_MIN])
+ #define low_wmark_pages(z) (z->watermark[WMARK_LOW])
+ #define high_wmark_pages(z) (z->watermark[WMARK_HIGH])
++#define lots_wmark_pages(z) (z->watermark[WMARK_LOTS])
+ 
+ struct per_cpu_pages {
+ 	int count;		/* number of pages in the list */
+@@ -644,6 +647,7 @@ typedef struct pglist_data {
+ 	wait_queue_head_t kswapd_wait;
+ 	struct task_struct *kswapd;
+ 	int kswapd_max_order;
++	struct timer_list watermark_timer;
+ } pg_data_t;
+ 
+ #define node_present_pages(nid)	(NODE_DATA(nid)->node_present_pages)
+diff --git a/include/linux/nfsd/stats.h b/include/linux/nfsd/stats.h
+index 2693ef6..70a4c64 100644
+--- a/include/linux/nfsd/stats.h
++++ b/include/linux/nfsd/stats.h
+@@ -11,8 +11,8 @@
+ 
+ #include <linux/nfs4.h>
+ 
+-/* thread usage wraps very million seconds (approx one fortnight) */
+-#define	NFSD_USAGE_WRAP	(HZ*1000000)
++/* thread usage wraps every one hundred thousand seconds (approx one day) */
++#define  NFSD_USAGE_WRAP  (HZ*100000)
+ 
+ #ifdef __KERNEL__
+ 
+diff --git a/include/linux/swap.h b/include/linux/swap.h
+index b01f061..e428c44 100644
+--- a/include/linux/swap.h
++++ b/include/linux/swap.h
+@@ -206,6 +206,7 @@ extern unsigned int nr_free_pagecache_pages(void);
+ 
+ 
+ /* linux/mm/swap.c */
++extern void ____lru_cache_add(struct page *, enum lru_list lru, int tail);
+ extern void __lru_cache_add(struct page *, enum lru_list lru);
+ extern void lru_cache_add_lru(struct page *, enum lru_list lru);
+ extern void activate_page(struct page *);
+@@ -226,9 +227,14 @@ static inline void lru_cache_add_anon(struct page *page)
+ 	__lru_cache_add(page, LRU_INACTIVE_ANON);
+ }
+ 
++static inline void lru_cache_add_file_tail(struct page *page, int tail)
++{
++  	____lru_cache_add(page, LRU_INACTIVE_FILE, tail);
++}
++
+ static inline void lru_cache_add_file(struct page *page)
+ {
+-	__lru_cache_add(page, LRU_INACTIVE_FILE);
++	____lru_cache_add(page, LRU_INACTIVE_FILE, 0);
+ }
+ 
+ /* LRU Isolation modes. */
+diff --git a/include/net/inet_timewait_sock.h b/include/net/inet_timewait_sock.h
+index a066fdd..cd305f1 100644
+--- a/include/net/inet_timewait_sock.h
++++ b/include/net/inet_timewait_sock.h
+@@ -39,8 +39,8 @@ struct inet_hashinfo;
+  * If time > 4sec, it is "slow" path, no recycling is required,
+  * so that we select tick to get range about 4 seconds.
+  */
+-#if HZ <= 16 || HZ > 4096
+-# error Unsupported: HZ <= 16 or HZ > 4096
++#if HZ <= 16 || HZ > 16384
++# error Unsupported: HZ <= 16 or HZ > 16384
+ #elif HZ <= 32
+ # define INET_TWDR_RECYCLE_TICK (5 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
+ #elif HZ <= 64
+@@ -55,8 +55,12 @@ struct inet_hashinfo;
+ # define INET_TWDR_RECYCLE_TICK (10 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
+ #elif HZ <= 2048
+ # define INET_TWDR_RECYCLE_TICK (11 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
+-#else
++#elif HZ <= 4096
+ # define INET_TWDR_RECYCLE_TICK (12 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
++#elif HZ <= 8192
++# define INET_TWDR_RECYCLE_TICK (13 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
++#else
++# define INET_TWDR_RECYCLE_TICK (14 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
+ #endif
+ 
+ /* TIME_WAIT reaping mechanism. */
+diff --git a/init/calibrate.c b/init/calibrate.c
+index 30a44cd..346c0c9 100644
+--- a/init/calibrate.c
++++ b/init/calibrate.c
+@@ -209,7 +209,7 @@ void __cpuinit calibrate_delay(void)
+ 	if (!printed)
+ 		pr_cont("%lu.%02lu BogoMIPS (lpj=%lu)\n",
+ 			lpj/(500000/HZ),
+-			(lpj/(5000/HZ)) % 100, lpj);
++			(lpj * 10 /(50000/HZ)) % 100, lpj);
+ 
+ 	loops_per_jiffy = lpj;
+ 	printed = true;
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 96c3c50..965a106 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -440,8 +440,8 @@ out:
+ }
+ EXPORT_SYMBOL(add_to_page_cache_locked);
+ 
+-int add_to_page_cache_lru(struct page *page, struct address_space *mapping,
+-				pgoff_t offset, gfp_t gfp_mask)
++int __add_to_page_cache_lru(struct page *page, struct address_space *mapping,
++        pgoff_t offset, gfp_t gfp_mask, int tail)
+ {
+ 	int ret;
+ 
+@@ -457,12 +457,18 @@ int add_to_page_cache_lru(struct page *page, struct address_space *mapping,
+ 	ret = add_to_page_cache(page, mapping, offset, gfp_mask);
+ 	if (ret == 0) {
+ 		if (page_is_file_cache(page))
+-			lru_cache_add_file(page);
++			lru_cache_add_file_tail(page, tail);
+ 		else
+ 			lru_cache_add_anon(page);
+ 	}
+ 	return ret;
+ }
++
++int add_to_page_cache_lru(struct page *page, struct address_space *mapping,
++        pgoff_t offset, gfp_t gfp_mask)
++{
++  	return __add_to_page_cache_lru(page, mapping, offset, gfp_mask, 0);
++}
+ EXPORT_SYMBOL_GPL(add_to_page_cache_lru);
+ 
+ #ifdef CONFIG_NUMA
+@@ -963,6 +969,28 @@ static void shrink_readahead_size_eio(struct file *filp,
+ 	ra->ra_pages /= 4;
+ }
+ 
++static inline int nr_mapped(void)
++{
++  return global_page_state(NR_FILE_MAPPED) +
++    global_page_state(NR_ANON_PAGES);
++}
++
++/*
++ * This examines how large in pages a file size is and returns 1 if it is
++ * more than half the unmapped ram. Avoid doing read_page_state which is
++ * expensive unless we already know it is likely to be large enough.
++ */
++static int large_isize(unsigned long nr_pages)
++{
++  if (nr_pages * 6 > vm_total_pages) {
++     unsigned long unmapped_ram = vm_total_pages - nr_mapped();
++
++    if (nr_pages * 2 > unmapped_ram)
++      return 1;
++  }
++  return 0;
++}
++
+ /**
+  * do_generic_file_read - generic file read routine
+  * @filp:	the file to read
+@@ -987,7 +1015,7 @@ static void do_generic_file_read(struct file *filp, loff_t *ppos,
+ 	pgoff_t prev_index;
+ 	unsigned long offset;      /* offset into pagecache page */
+ 	unsigned int prev_offset;
+-	int error;
++	int error, tail = 0;
+ 
+ 	index = *ppos >> PAGE_CACHE_SHIFT;
+ 	prev_index = ra->prev_pos >> PAGE_CACHE_SHIFT;
+@@ -998,7 +1026,7 @@ static void do_generic_file_read(struct file *filp, loff_t *ppos,
+ 	for (;;) {
+ 		struct page *page;
+ 		pgoff_t end_index;
+-		loff_t isize;
++		loff_t isize = 0;
+ 		unsigned long nr, ret;
+ 
+ 		cond_resched();
+@@ -1172,8 +1200,16 @@ no_cached_page:
+ 			desc->error = -ENOMEM;
+ 			goto out;
+ 		}
+-		error = add_to_page_cache_lru(page, mapping,
+-						index, GFP_KERNEL);
++		/*
++	         * If we know the file is large we add the pages read to the
++	         * end of the lru as we're unlikely to be able to cache the
++	         * whole file in ram so make those pages the first to be
++	         * dropped if not referenced soon.
++	         */
++    if (large_isize(end_index))
++      tail = 1;
++    error = __add_to_page_cache_lru(page, mapping,
++            index, GFP_KERNEL, tail);
+ 		if (error) {
+ 			page_cache_release(page);
+ 			if (error == -EEXIST)
+diff --git a/mm/swap.c b/mm/swap.c
+index 3ce7bc3..4798e3e 100644
+--- a/mm/swap.c
++++ b/mm/swap.c
+@@ -215,15 +215,23 @@ void mark_page_accessed(struct page *page)
+ 
+ EXPORT_SYMBOL(mark_page_accessed);
+ 
+-void __lru_cache_add(struct page *page, enum lru_list lru)
++void ______pagevec_lru_add(struct pagevec *pvec, enum lru_list lru, int tail);
++
++void ____lru_cache_add(struct page *page, enum lru_list lru, int tail)
+ {
+ 	struct pagevec *pvec = &get_cpu_var(lru_add_pvecs)[lru];
+ 
+ 	page_cache_get(page);
+ 	if (!pagevec_add(pvec, page))
+-		____pagevec_lru_add(pvec, lru);
++		______pagevec_lru_add(pvec, lru, tail);
+ 	put_cpu_var(lru_add_pvecs);
+ }
++EXPORT_SYMBOL(____lru_cache_add);
++
++void __lru_cache_add(struct page *page, enum lru_list lru)
++{
++  	____lru_cache_add(page, lru, 0);
++}
+ EXPORT_SYMBOL(__lru_cache_add);
+ 
+ /**
+@@ -231,7 +239,7 @@ EXPORT_SYMBOL(__lru_cache_add);
+  * @page: the page to be added to the LRU.
+  * @lru: the LRU list to which the page is added.
+  */
+-void lru_cache_add_lru(struct page *page, enum lru_list lru)
++void __lru_cache_add_lru(struct page *page, enum lru_list lru, int tail)
+ {
+ 	if (PageActive(page)) {
+ 		VM_BUG_ON(PageUnevictable(page));
+@@ -242,7 +250,12 @@ void lru_cache_add_lru(struct page *page, enum lru_list lru)
+ 	}
+ 
+ 	VM_BUG_ON(PageLRU(page) || PageActive(page) || PageUnevictable(page));
+-	__lru_cache_add(page, lru);
++	____lru_cache_add(page, lru, tail);
++}
++
++void lru_cache_add_lru(struct page *page, enum lru_list lru)
++{
++  __lru_cache_add_lru(page, lru, 0);
+ }
+ 
+ /**
+@@ -402,7 +415,7 @@ EXPORT_SYMBOL(__pagevec_release);
+  * Add the passed pages to the LRU, then drop the caller's refcount
+  * on them.  Reinitialises the caller's pagevec.
+  */
+-void ____pagevec_lru_add(struct pagevec *pvec, enum lru_list lru)
++void ______pagevec_lru_add(struct pagevec *pvec, enum lru_list lru, int tail)
+ {
+ 	int i;
+ 	struct zone *zone = NULL;
+@@ -430,14 +443,17 @@ void ____pagevec_lru_add(struct pagevec *pvec, enum lru_list lru)
+ 		if (active)
+ 			SetPageActive(page);
+ 		update_page_reclaim_stat(zone, page, file, active);
+-		add_page_to_lru_list(zone, page, lru);
++		__add_page_to_lru_list(zone, page, lru, tail);
+ 	}
+ 	if (zone)
+ 		spin_unlock_irq(&zone->lru_lock);
+ 	release_pages(pvec->pages, pvec->nr, pvec->cold);
+ 	pagevec_reinit(pvec);
+ }
+-
++void ____pagevec_lru_add(struct pagevec *pvec, enum lru_list lru)
++{
++  	______pagevec_lru_add(pvec, lru, 0);
++}
+ EXPORT_SYMBOL(____pagevec_lru_add);
+ 
+ /*
+diff --git a/mm/vmscan.c b/mm/vmscan.c
+index a206c8b..48eb5ca 100644
+--- a/mm/vmscan.c
++++ b/mm/vmscan.c
+@@ -36,6 +36,7 @@
+ #include <linux/rwsem.h>
+ #include <linux/delay.h>
+ #include <linux/kthread.h>
++#include <linux/timer.h>
+ #include <linux/freezer.h>
+ #include <linux/memcontrol.h>
+ #include <linux/delayacct.h>
+@@ -124,7 +125,7 @@ struct scan_control {
+ /*
+  * From 0 .. 100.  Higher means more swappy.
+  */
+-int vm_swappiness = 60;
++int vm_swappiness;
+ long vm_total_pages;	/* The total number of pages which the VM controls */
+ 
+ static LIST_HEAD(shrinker_list);
+@@ -1541,6 +1542,7 @@ static void get_scan_count(struct zone *zone, struct scan_control *sc,
+ 	u64 fraction[2], denominator;
+ 	enum lru_list l;
+ 	int noswap = 0;
++	int tmp_priority;
+ 
+ 	/* If we have no swap space, do not bother scanning anon pages. */
+ 	if (!sc->may_swap || (nr_swap_pages <= 0)) {
+@@ -1621,7 +1623,11 @@ out:
+ 
+ 		scan = zone_nr_lru_pages(zone, sc, l);
+ 		if (priority || noswap) {
+-			scan >>= priority;
++			tmp_priority = priority;
++
++      			if (file && priority > 0)
++        		  tmp_priority = DEF_PRIORITY;
++      			scan >>= tmp_priority;
+ 			scan = div64_u64(scan * fraction[file], denominator);
+ 		}
+ 		nr[l] = nr_scan_try_batch(scan,
+@@ -1697,6 +1703,35 @@ static void shrink_zone(int priority, struct zone *zone,
+ }
+ 
+ /*
++ * Helper functions to adjust nice level of kswapd, based on the priority of
++ * the task (p) that called it. If it is already higher priority we do not
++ * demote its nice level since it is still working on behalf of a higher
++ * priority task. With kernel threads we leave it at nice 0.
++ *
++ * We don't ever run kswapd real time, so if a real time task calls kswapd we
++ * set it to highest SCHED_NORMAL priority.
++ */
++static inline int effective_sc_prio(struct task_struct *p)
++{
++  if (likely(p->mm)) {
++    if (rt_task(p))
++      return -20;
++    if (p->policy == SCHED_IDLEPRIO)
++      return 19;
++    return task_nice(p);
++  }
++  return 0;
++}
++
++static void set_kswapd_nice(struct task_struct *kswapd, int active)
++{
++  long nice = effective_sc_prio(current);
++
++  if (task_nice(kswapd) > nice || !active)
++    set_user_nice(kswapd, nice);
++}
++
++/*
+  * This is the direct reclaim path, for page-allocating processes.  We only
+  * try to reclaim pages from zones which will satisfy the caller's allocation
+  * request.
+@@ -2237,6 +2272,8 @@ out:
+ 	return sc.nr_reclaimed;
+ }
+ 
++#define WT_EXPIRY  (HZ * 5)  /* Time to wakeup watermark_timer */
++
+ /*
+  * The background pageout daemon, started as a kernel thread
+  * from the init process.
+@@ -2286,7 +2323,10 @@ static int kswapd(void *p)
+ 	for ( ; ; ) {
+ 		unsigned long new_order;
+ 		int ret;
++		
++		/* kswapd has been busy so delay watermark_timer */
+ 
++		mod_timer(&pgdat->watermark_timer, jiffies + WT_EXPIRY);
+ 		prepare_to_wait(&pgdat->kswapd_wait, &wait, TASK_INTERRUPTIBLE);
+ 		new_order = pgdat->kswapd_max_order;
+ 		pgdat->kswapd_max_order = 0;
+@@ -2324,6 +2364,7 @@ static int kswapd(void *p)
+ 				}
+ 			}
+ 
++			set_user_nice(tsk, 0);
+ 			order = pgdat->kswapd_max_order;
+ 		}
+ 		finish_wait(&pgdat->kswapd_wait, &wait);
+@@ -2348,6 +2389,7 @@ static int kswapd(void *p)
+ void wakeup_kswapd(struct zone *zone, int order)
+ {
+ 	pg_data_t *pgdat;
++	int active;
+ 
+ 	if (!populated_zone(zone))
+ 		return;
+@@ -2357,7 +2399,9 @@ void wakeup_kswapd(struct zone *zone, int order)
+ 	pgdat = zone->zone_pgdat;
+ 	if (pgdat->kswapd_max_order < order)
+ 		pgdat->kswapd_max_order = order;
+-	if (!waitqueue_active(&pgdat->kswapd_wait))
++	active = waitqueue_active(&pgdat->kswapd_wait);
++  	set_kswapd_nice(pgdat->kswapd, active);
++  	if (!active)
+ 		return;
+ 	if (zone_watermark_ok_safe(zone, order, low_wmark_pages(zone), 0, 0))
+ 		return;
+@@ -2466,20 +2510,57 @@ static int __devinit cpu_callback(struct notifier_block *nfb,
+ }
+ 
+ /*
++ * We wake up kswapd every WT_EXPIRY till free ram is above pages_lots
++ */
++static void watermark_wakeup(unsigned long data)
++{
++  pg_data_t *pgdat = (pg_data_t *)data;
++  struct timer_list *wt = &pgdat->watermark_timer;
++  int i;
++
++  if (!waitqueue_active(&pgdat->kswapd_wait) || above_background_load())
++    goto out;
++  for (i = pgdat->nr_zones - 1; i >= 0; i--) {
++    struct zone *z = pgdat->node_zones + i;
++
++    if (!populated_zone(z) || is_highmem(z)) {
++      /* We are better off leaving highmem full */
++      continue;
++    }
++    if (!zone_watermark_ok(z, 0, lots_wmark_pages(z), 0, 0)) {
++      wake_up_interruptible(&pgdat->kswapd_wait);
++      goto out;
++    }
++  }
++out:
++  mod_timer(wt, jiffies + WT_EXPIRY);
++  return;
++}
++
++/*
+  * This kswapd start function will be called by init and node-hot-add.
+  * On node-hot-add, kswapd will moved to proper cpus if cpus are hot-added.
+  */
+ int kswapd_run(int nid)
+ {
+ 	pg_data_t *pgdat = NODE_DATA(nid);
++	struct timer_list *wt;
+ 	int ret = 0;
+ 
+ 	if (pgdat->kswapd)
+ 		return 0;
+ 
++	wt = &pgdat->watermark_timer;
++  	init_timer(wt);
++  	wt->data = (unsigned long)pgdat;
++  	wt->function = watermark_wakeup;
++  	wt->expires = jiffies + WT_EXPIRY;
++  	add_timer(wt);
++
+ 	pgdat->kswapd = kthread_run(kswapd, pgdat, "kswapd%d", nid);
+ 	if (IS_ERR(pgdat->kswapd)) {
+ 		/* failure at boot is fatal */
++		del_timer(wt);
+ 		BUG_ON(system_state == SYSTEM_BOOTING);
+ 		printk("Failed to start kswapd on node %d\n",nid);
+ 		ret = -1;

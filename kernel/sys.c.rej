@@ -1,0 +1,14 @@
+--- kernel/sys.c	2010-11-20 21:28:31.888000072 -0500
++++ kernel/sys.c	2010-11-20 21:32:52.044000072 -0500
+@@ -1080,8 +1080,10 @@
+ 	err = session;
+ out:
+ 	write_unlock_irq(&tasklist_lock);
+-	if (err > 0)
++	if (err > 0) {
+ 		proc_sid_connector(group_leader);
++		sched_autogroup_create_attach(group_leader);
++	}
+ 	return err;
+ }
+ 

@@ -1,0 +1,55 @@
+commit 9c3e41204f21cf8600a3bbc69f52c55e805f1227
+Author: Umaro <umaro@narshe.net>
+Date:   Tue Jun 21 21:20:22 2011 +0200
+
+    mm: remove unlikely() from page_mapping()
+    
+        page_mapping() has a unlikely that the mapping has PAGE_MAPPING_ANON set.
+        But running the annotated branch profiler on a normal desktop system doing
+        vairous tasks (xchat, evolution, firefox, distcc), it is not really that
+        unlikely that the mapping here will have the PAGE_MAPPING_ANON flag set:
+    
+         correct incorrect  %        Function                  File              Line
+         ------- ---------  -        --------                  ----              ----
+        35935762 1270265395  97 page_mapping                   mm.h                 659
+        1306198001   143659   0 page_mapping                   mm.h                 657
+        203131478   121586   0 page_mapping                   mm.h                 657
+         5415491     1116   0 page_mapping                   mm.h                 657
+        74899487     1116   0 page_mapping                   mm.h                 657
+        203132845      224   0 page_mapping                   mm.h                 659
+         5415464       27   0 page_mapping                   mm.h                 659
+           13552        0   0 page_mapping                   mm.h                 657
+           13552        0   0 page_mapping                   mm.h                 659
+          242630        0   0 page_mapping                   mm.h                 657
+          242630        0   0 page_mapping                   mm.h                 659
+        74899487        0   0 page_mapping                   mm.h                 659
+    
+        The page_mapping() is a static inline, which is why it shows up multiple
+        times.
+    
+        The unlikely in page_mapping() was correct a total of 1909540379 times and
+        incorrect 1270533123 times, with a 39% being incorrect.  With this much of
+        an error, it's best to simply remove the unlikely and have the compiler
+        and branch prediction figure this out.
+    
+        Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+        Cc: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
+        Cc: Nick Piggin <npiggin@kernel.dk>
+        Cc: Rik van Riel <riel@redhat.com>
+        Cc: Lee Schermerhorn <Lee.Schermerhorn@hp.com>
+        Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+        Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 985e15e..48fe5e6 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -656,7 +656,7 @@ static inline struct address_space *page_mapping(struct page *page)
+ 	VM_BUG_ON(PageSlab(page));
+ 	if (unlikely(PageSwapCache(page)))
+ 		mapping = &swapper_space;
+-	else if (unlikely((unsigned long)mapping & PAGE_MAPPING_ANON))
++	else if ((unsigned long)mapping & PAGE_MAPPING_ANON)
+ 		mapping = NULL;
+ 	return mapping;
+ }

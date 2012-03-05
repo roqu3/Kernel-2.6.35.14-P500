@@ -1,0 +1,52 @@
+commit 2c3ba731023503757784af6987cdbdcf7b24fa0b
+Author: Umaro <umaro@narshe.net>
+Date:   Tue Jun 21 21:41:30 2011 +0200
+
+    brk: fix min_brk lower bound computation for COMPAT_BRK
+    
+        Even if CONFIG_COMPAT_BRK is set in the kernel configuration, it can still
+        be overriden by randomize_va_space sysctl.
+    
+        If this is the case, the min_brk computation in sys_brk() implementation
+        is wrong, as it solely takes into account COMPAT_BRK setting, assuming
+        that brk start is not randomized.  But that might not be the case if
+        randomize_va_space sysctl has been set to '2' at the time the binary has
+        been loaded from disk.
+    
+        In such case, the check has to be done in a same way as in
+        !CONFIG_COMPAT_BRK case.
+    
+        In addition to that, the check for the COMPAT_BRK case introduced back in
+        a5b4592c ("brk: make sys_brk() honor COMPAT_BRK when computing lower
+        bound") is slightly wrong -- the lower bound shouldn't be mm->end_code,
+        but mm->end_data instead, as that's where the legacy applications expect
+        brk section to start (i.e.  immediately after last global variable).
+    
+        [akpm@linux-foundation.org: fix comment]
+        Signed-off-by: Jiri Kosina <jkosina@suse.cz>
+        Cc: Geert Uytterhoeven <geert@linux-m68k.org>
+        Cc: Ingo Molnar <mingo@elte.hu>
+        Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+        Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 073b39d..c5c1ced 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -252,7 +252,15 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
+ 	down_write(&mm->mmap_sem);
+ 
+ #ifdef CONFIG_COMPAT_BRK
+-	min_brk = mm->end_code;
++	/*
++	 * CONFIG_COMPAT_BRK can still be overridden by setting
++	 * randomize_va_space to 2, which will still cause mm->start_brk
++	 * to be arbitrarily shifted
++	 */
++	if (mm->start_brk > PAGE_ALIGN(mm->end_data))
++		min_brk = mm->start_brk;
++	else
++		min_brk = mm->end_data;
+ #else
+ 	min_brk = mm->start_brk;
+ #endif

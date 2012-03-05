@@ -1,0 +1,312 @@
+commit 5f0e4e9c1c55dc0597b9d8b0f8f4c6451afbb712
+Author: Sriranjan Srikantam <cssrika@codeaurora.org>
+Date:   Thu Mar 31 10:49:43 2011 +0530
+
+    msm: audio: 7x27: Fix bug by releasing spinlock in error case
+    
+    Audio drivers does not release spinlock when kmalloc() fails in
+    post_event function. This can result in deadlock or system hang
+    in low memory conditions. Fix this bug by releasing the spinlock
+    when kmalloc fails.
+    
+    Change-Id: Id6ffd5c34ac36f68cb7b490a43bdf09bb80c5b9e
+    CRs-Fixed: 281588
+    Signed-off-by: Sriranjan Srikantam <cssrika@codeaurora.org>
+
+diff --git a/arch/arm/mach-msm/qdsp5/audio_aac.c b/arch/arm/mach-msm/qdsp5/audio_aac.c
+index 5a1fe3f..8a4d01f 100644
+--- a/arch/arm/mach-msm/qdsp5/audio_aac.c
++++ b/arch/arm/mach-msm/qdsp5/audio_aac.c
+@@ -181,8 +181,10 @@ static void audplay_send_data(struct audio *audio, unsigned needed);
+ static void audplay_config_hostpcm(struct audio *audio);
+ static void audplay_buffer_refresh(struct audio *audio);
+ static void audio_dsp_event(void *private, unsigned id, uint16_t *msg);
++#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audaac_post_event(struct audio *audio, int type,
+ 		union msm_audio_event_payload payload);
++#endif
+ 
+ static int rmt_put_resource(struct audio *audio)
+ {
+@@ -1491,6 +1493,7 @@ static int audio_release(struct inode *inode, struct file *file)
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audaac_post_event(struct audio *audio, int type,
+ 		union msm_audio_event_payload payload)
+ {
+@@ -1507,6 +1510,7 @@ static void audaac_post_event(struct audio *audio, int type,
+ 		e_node = kmalloc(sizeof(struct audaac_event), GFP_ATOMIC);
+ 		if (!e_node) {
+ 			MM_ERR("No mem to post event %d\n", type);
++			spin_unlock_irqrestore(&audio->event_queue_lock, flags);
+ 			return;
+ 		}
+ 	}
+@@ -1519,7 +1523,6 @@ static void audaac_post_event(struct audio *audio, int type,
+ 	wake_up(&audio->event_wait);
+ }
+ 
+-#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audaac_suspend(struct early_suspend *h)
+ {
+ 	struct audaac_suspend_ctl *ctl =
+diff --git a/arch/arm/mach-msm/qdsp5/audio_amrnb.c b/arch/arm/mach-msm/qdsp5/audio_amrnb.c
+index 5ee6b07..f430b0c 100644
+--- a/arch/arm/mach-msm/qdsp5/audio_amrnb.c
++++ b/arch/arm/mach-msm/qdsp5/audio_amrnb.c
+@@ -184,8 +184,10 @@ static void audamrnb_send_data(struct audio *audio, unsigned needed);
+ static void audamrnb_config_hostpcm(struct audio *audio);
+ static void audamrnb_buffer_refresh(struct audio *audio);
+ static void audamrnb_dsp_event(void *private, unsigned id, uint16_t *msg);
++#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audamrnb_post_event(struct audio *audio, int type,
+ 		union msm_audio_event_payload payload);
++#endif
+ 
+ static int rmt_put_resource(struct audio *audio)
+ {
+@@ -1289,6 +1291,7 @@ static int audamrnb_release(struct inode *inode, struct file *file)
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audamrnb_post_event(struct audio *audio, int type,
+ 		union msm_audio_event_payload payload)
+ {
+@@ -1305,6 +1308,7 @@ static void audamrnb_post_event(struct audio *audio, int type,
+ 		e_node = kmalloc(sizeof(struct audamrnb_event), GFP_ATOMIC);
+ 		if (!e_node) {
+ 			MM_ERR("No mem to post event %d\n", type);
++			spin_unlock_irqrestore(&audio->event_queue_lock, flags);
+ 			return;
+ 		}
+ 	}
+@@ -1317,7 +1321,6 @@ static void audamrnb_post_event(struct audio *audio, int type,
+ 	wake_up(&audio->event_wait);
+ }
+ 
+-#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audamrnb_suspend(struct early_suspend *h)
+ {
+ 	struct audamrnb_suspend_ctl *ctl =
+diff --git a/arch/arm/mach-msm/qdsp5/audio_amrwb.c b/arch/arm/mach-msm/qdsp5/audio_amrwb.c
+index 718dfb3..dcd3c05 100644
+--- a/arch/arm/mach-msm/qdsp5/audio_amrwb.c
++++ b/arch/arm/mach-msm/qdsp5/audio_amrwb.c
+@@ -182,8 +182,10 @@ static void audamrwb_send_data(struct audio *audio, unsigned needed);
+ static void audamrwb_config_hostpcm(struct audio *audio);
+ static void audamrwb_buffer_refresh(struct audio *audio);
+ static void audamrwb_dsp_event(void *private, unsigned id, uint16_t *msg);
++#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audamrwb_post_event(struct audio *audio, int type,
+ 		union msm_audio_event_payload payload);
++#endif
+ 
+ static int rmt_put_resource(struct audio *audio)
+ {
+@@ -1360,6 +1362,7 @@ static int audamrwb_release(struct inode *inode, struct file *file)
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audamrwb_post_event(struct audio *audio, int type,
+ 		union msm_audio_event_payload payload)
+ {
+@@ -1376,6 +1379,7 @@ static void audamrwb_post_event(struct audio *audio, int type,
+ 		e_node = kmalloc(sizeof(struct audamrwb_event), GFP_ATOMIC);
+ 		if (!e_node) {
+ 			MM_ERR("No mem to post event %d\n", type);
++			spin_unlock_irqrestore(&audio->event_queue_lock, flags);
+ 			return;
+ 		}
+ 	}
+@@ -1388,7 +1392,6 @@ static void audamrwb_post_event(struct audio *audio, int type,
+ 	wake_up(&audio->event_wait);
+ }
+ 
+-#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audamrwb_suspend(struct early_suspend *h)
+ {
+ 	struct audamrwb_suspend_ctl *ctl =
+diff --git a/arch/arm/mach-msm/qdsp5/audio_evrc.c b/arch/arm/mach-msm/qdsp5/audio_evrc.c
+index c52e3fd..eaa6528 100644
+--- a/arch/arm/mach-msm/qdsp5/audio_evrc.c
++++ b/arch/arm/mach-msm/qdsp5/audio_evrc.c
+@@ -176,8 +176,10 @@ static void audevrc_send_data(struct audio *audio, unsigned needed);
+ static void audevrc_dsp_event(void *private, unsigned id, uint16_t *msg);
+ static void audevrc_config_hostpcm(struct audio *audio);
+ static void audevrc_buffer_refresh(struct audio *audio);
++#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audevrc_post_event(struct audio *audio, int type,
+ 		union msm_audio_event_payload payload);
++#endif
+ 
+ static int rmt_put_resource(struct audio *audio)
+ {
+@@ -1281,6 +1283,7 @@ static int audevrc_release(struct inode *inode, struct file *file)
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audevrc_post_event(struct audio *audio, int type,
+ 		union msm_audio_event_payload payload)
+ {
+@@ -1297,6 +1300,7 @@ static void audevrc_post_event(struct audio *audio, int type,
+ 		e_node = kmalloc(sizeof(struct audevrc_event), GFP_ATOMIC);
+ 		if (!e_node) {
+ 			MM_ERR("No mem to post event %d\n", type);
++			spin_unlock_irqrestore(&audio->event_queue_lock, flags);
+ 			return;
+ 		}
+ 	}
+@@ -1309,7 +1313,6 @@ static void audevrc_post_event(struct audio *audio, int type,
+ 	wake_up(&audio->event_wait);
+ }
+ 
+-#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audevrc_suspend(struct early_suspend *h)
+ {
+ 	struct audevrc_suspend_ctl *ctl =
+diff --git a/arch/arm/mach-msm/qdsp5/audio_mp3.c b/arch/arm/mach-msm/qdsp5/audio_mp3.c
+index 00502af..13f9efb 100644
+--- a/arch/arm/mach-msm/qdsp5/audio_mp3.c
++++ b/arch/arm/mach-msm/qdsp5/audio_mp3.c
+@@ -1989,6 +1989,7 @@ static void audmp3_post_event(struct audio *audio, int type,
+ 		e_node = kmalloc(sizeof(struct audmp3_event), GFP_ATOMIC);
+ 		if (!e_node) {
+ 			MM_ERR("No mem to post event %d\n", type);
++			spin_unlock_irqrestore(&audio->event_queue_lock, flags);
+ 			return;
+ 		}
+ 	}
+diff --git a/arch/arm/mach-msm/qdsp5/audio_pcm.c b/arch/arm/mach-msm/qdsp5/audio_pcm.c
+index 674562c..b4d6514 100644
+--- a/arch/arm/mach-msm/qdsp5/audio_pcm.c
++++ b/arch/arm/mach-msm/qdsp5/audio_pcm.c
+@@ -1392,6 +1392,7 @@ static void audpcm_post_event(struct audio *audio, int type,
+ 		e_node = kmalloc(sizeof(struct audpcm_event), GFP_ATOMIC);
+ 		if (!e_node) {
+ 			MM_ERR("No mem to post event %d\n", type);
++			spin_unlock_irqrestore(&audio->event_queue_lock, flags);
+ 			return;
+ 		}
+ 	}
+diff --git a/arch/arm/mach-msm/qdsp5/audio_qcelp.c b/arch/arm/mach-msm/qdsp5/audio_qcelp.c
+index 58ba61d..5b0a9cd 100644
+--- a/arch/arm/mach-msm/qdsp5/audio_qcelp.c
++++ b/arch/arm/mach-msm/qdsp5/audio_qcelp.c
+@@ -172,8 +172,10 @@ static void audqcelp_send_data(struct audio *audio, unsigned needed);
+ static void audqcelp_config_hostpcm(struct audio *audio);
+ static void audqcelp_buffer_refresh(struct audio *audio);
+ static void audqcelp_dsp_event(void *private, unsigned id, uint16_t *msg);
++#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audqcelp_post_event(struct audio *audio, int type,
+ 		union msm_audio_event_payload payload);
++#endif
+ 
+ static int rmt_put_resource(struct audio *audio)
+ {
+@@ -1283,6 +1285,7 @@ static int audqcelp_release(struct inode *inode, struct file *file)
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audqcelp_post_event(struct audio *audio, int type,
+ 		union msm_audio_event_payload payload)
+ {
+@@ -1299,6 +1302,7 @@ static void audqcelp_post_event(struct audio *audio, int type,
+ 		e_node = kmalloc(sizeof(struct audqcelp_event), GFP_ATOMIC);
+ 		if (!e_node) {
+ 			MM_ERR("No mem to post event %d\n", type);
++			spin_unlock_irqrestore(&audio->event_queue_lock, flags);
+ 			return;
+ 		}
+ 	}
+@@ -1311,7 +1315,6 @@ static void audqcelp_post_event(struct audio *audio, int type,
+ 	wake_up(&audio->event_wait);
+ }
+ 
+-#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audqcelp_suspend(struct early_suspend *h)
+ {
+ 	struct audqcelp_suspend_ctl *ctl =
+diff --git a/arch/arm/mach-msm/qdsp5/audio_wma.c b/arch/arm/mach-msm/qdsp5/audio_wma.c
+index 4b65e28..11f051f 100644
+--- a/arch/arm/mach-msm/qdsp5/audio_wma.c
++++ b/arch/arm/mach-msm/qdsp5/audio_wma.c
+@@ -190,8 +190,10 @@ static void audplay_send_data(struct audio *audio, unsigned needed);
+ static void audplay_config_hostpcm(struct audio *audio);
+ static void audplay_buffer_refresh(struct audio *audio);
+ static void audio_dsp_event(void *private, unsigned id, uint16_t *msg);
++#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audwma_post_event(struct audio *audio, int type,
+ 		union msm_audio_event_payload payload);
++#endif
+ 
+ static int rmt_put_resource(struct audio *audio)
+ {
+@@ -1427,6 +1429,7 @@ static int audio_release(struct inode *inode, struct file *file)
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audwma_post_event(struct audio *audio, int type,
+ 		union msm_audio_event_payload payload)
+ {
+@@ -1443,6 +1446,7 @@ static void audwma_post_event(struct audio *audio, int type,
+ 		e_node = kmalloc(sizeof(struct audwma_event), GFP_ATOMIC);
+ 		if (!e_node) {
+ 			MM_ERR("No mem to post event %d\n", type);
++			spin_unlock_irqrestore(&audio->event_queue_lock, flags);
+ 			return;
+ 		}
+ 	}
+@@ -1455,7 +1459,6 @@ static void audwma_post_event(struct audio *audio, int type,
+ 	wake_up(&audio->event_wait);
+ }
+ 
+-#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audwma_suspend(struct early_suspend *h)
+ {
+ 	struct audwma_suspend_ctl *ctl =
+diff --git a/arch/arm/mach-msm/qdsp5/audio_wmapro.c b/arch/arm/mach-msm/qdsp5/audio_wmapro.c
+index 6f02b6f..b5ddf5f 100644
+--- a/arch/arm/mach-msm/qdsp5/audio_wmapro.c
++++ b/arch/arm/mach-msm/qdsp5/audio_wmapro.c
+@@ -189,8 +189,10 @@ static void audplay_send_data(struct audio *audio, unsigned needed);
+ static void audplay_config_hostpcm(struct audio *audio);
+ static void audplay_buffer_refresh(struct audio *audio);
+ static void audio_dsp_event(void *private, unsigned id, uint16_t *msg);
++#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audwmapro_post_event(struct audio *audio, int type,
+ 		union msm_audio_event_payload payload);
++#endif
+ 
+ static int rmt_put_resource(struct audio *audio)
+ {
+@@ -1424,6 +1426,7 @@ static int audio_release(struct inode *inode, struct file *file)
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audwmapro_post_event(struct audio *audio, int type,
+ 		union msm_audio_event_payload payload)
+ {
+@@ -1440,6 +1443,7 @@ static void audwmapro_post_event(struct audio *audio, int type,
+ 		e_node = kmalloc(sizeof(struct audwmapro_event), GFP_ATOMIC);
+ 		if (!e_node) {
+ 			MM_ERR("No mem to post event %d\n", type);
++			spin_unlock_irqrestore(&audio->event_queue_lock, flags);
+ 			return;
+ 		}
+ 	}
+@@ -1452,7 +1456,6 @@ static void audwmapro_post_event(struct audio *audio, int type,
+ 	wake_up(&audio->event_wait);
+ }
+ 
+-#ifdef CONFIG_HAS_EARLYSUSPEND
+ static void audwmapro_suspend(struct early_suspend *h)
+ {
+ 	struct audwmapro_suspend_ctl *ctl =

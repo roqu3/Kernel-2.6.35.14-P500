@@ -1,0 +1,30 @@
+commit 1a5c85660c418df9b54a1eab95c1b89755f0f23a
+Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+Date:   Fri Dec 24 15:04:41 2010 +0100
+
+    PM: Prototype the pm_generic_ operations
+    
+    The pm_generic_ operations are all exported but are not prototyped in any
+    header file for direct use. Do so.
+    
+    [rjw: Added extern.]
+    
+    Signed-off-by: Mark Brown <broonie@opensource.wolfsonmicro.com>
+    Signed-off-by: Rafael J. Wysocki <rjw@sisk.pl>
+
+diff --git a/include/linux/pm.h b/include/linux/pm.h
+index b0e7bba..a87fb5a 100644
+--- a/include/linux/pm.h
++++ b/include/linux/pm.h
+@@ -597,4 +597,11 @@ extern unsigned int	pm_flags;
+ #define PM_APM	1
+ #define PM_ACPI	2
+ 
++extern int pm_generic_suspend(struct device *dev);
++extern int pm_generic_resume(struct device *dev);
++extern int pm_generic_freeze(struct device *dev);
++extern int pm_generic_thaw(struct device *dev);
++extern int pm_generic_restore(struct device *dev);
++extern int pm_generic_poweroff(struct device *dev);
++
+ #endif /* _LINUX_PM_H */

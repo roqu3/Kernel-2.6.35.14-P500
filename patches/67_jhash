@@ -1,0 +1,392 @@
+commit c747f410c7f1aff4869af94dea61244ad7212d3a
+Author: LorD ClockaN <davor@losinj.com>
+Date:   Fri Jun 17 14:12:58 2011 +0200
+
+    ADD: Speed tweak in jhash
+
+diff --git a/include/linux/jhash.h b/include/linux/jhash.h
+index 2a2f99f..dafeb0d 100644
+--- a/include/linux/jhash.h
++++ b/include/linux/jhash.h
+@@ -1,131 +1,38 @@
+ #ifndef _LINUX_JHASH_H
+ #define _LINUX_JHASH_H
+ 
+-/* jhash.h: Jenkins hash support.
+- *
+- * Copyright (C) 1996 Bob Jenkins (bob_jenkins@burtleburtle.net)
+- *
+- * http://burtleburtle.net/bob/hash/
+- *
+- * These are the credits from Bob's sources:
+- *
+- * lookup2.c, by Bob Jenkins, December 1996, Public Domain.
+- * hash(), hash2(), hash3, and mix() are externally useful functions.
+- * Routines to test the hash are included if SELF_TEST is defined.
+- * You can use this free for any purpose.  It has no warranty.
+- *
+- * Copyright (C) 2003 David S. Miller (davem@redhat.com)
+- *
+- * I've modified Bob's hash to be useful in the Linux kernel, and
+- * any bugs present are surely my fault.  -DaveM
+- */
+-
+-/* NOTE: Arguments are modified. */
+-#define __jhash_mix(a, b, c) \
+-{ \
+-  a -= b; a -= c; a ^= (c>>13); \
+-  b -= c; b -= a; b ^= (a<<8); \
+-  c -= a; c -= b; c ^= (b>>13); \
+-  a -= b; a -= c; a ^= (c>>12);  \
+-  b -= c; b -= a; b ^= (a<<16); \
+-  c -= a; c -= b; c ^= (b>>5); \
+-  a -= b; a -= c; a ^= (c>>3);  \
+-  b -= c; b -= a; b ^= (a<<10); \
+-  c -= a; c -= b; c ^= (b>>15); \
+-}
+-
+-/* The golden ration: an arbitrary value */
+-#define JHASH_GOLDEN_RATIO	0x9e3779b9
+-
+-/* The most generic version, hashes an arbitrary sequence
+- * of bytes.  No alignment or length assumptions are made about
+- * the input key.
+- */
+-static inline u32 jhash(const void *key, u32 length, u32 initval)
+-{
+-	u32 a, b, c, len;
+-	const u8 *k = key;
+-
+-	len = length;
+-	a = b = JHASH_GOLDEN_RATIO;
+-	c = initval;
+-
+-	while (len >= 12) {
+-		a += (k[0] +((u32)k[1]<<8) +((u32)k[2]<<16) +((u32)k[3]<<24));
+-		b += (k[4] +((u32)k[5]<<8) +((u32)k[6]<<16) +((u32)k[7]<<24));
+-		c += (k[8] +((u32)k[9]<<8) +((u32)k[10]<<16)+((u32)k[11]<<24));
+-
+-		__jhash_mix(a,b,c);
+-
+-		k += 12;
+-		len -= 12;
+-	}
+-
+-	c += length;
+-	switch (len) {
+-	case 11: c += ((u32)k[10]<<24);
+-	case 10: c += ((u32)k[9]<<16);
+-	case 9 : c += ((u32)k[8]<<8);
+-	case 8 : b += ((u32)k[7]<<24);
+-	case 7 : b += ((u32)k[6]<<16);
+-	case 6 : b += ((u32)k[5]<<8);
+-	case 5 : b += k[4];
+-	case 4 : a += ((u32)k[3]<<24);
+-	case 3 : a += ((u32)k[2]<<16);
+-	case 2 : a += ((u32)k[1]<<8);
+-	case 1 : a += k[0];
+-	};
+-
+-	__jhash_mix(a,b,c);
+-
+-	return c;
++/* Best hash sizes are of power of two */
++#define jhash_size(n)   ((u32)1<<(n))
++/* Mask the hash value, i.e (value & jhash_mask(n)) instead of (value % n) */
++#define jhash_mask(n)   (jhash_size(n)-1)
++
++/* __jhash_final - final mixing of 3 32-bit values (a,b,c) into c */
++#define __jhash_final(a, b, c)			\
++{						\
++	c ^= b; c -= rol32(b, 14);		\
++	a ^= c; a -= rol32(c, 11);		\
++	b ^= a; b -= rol32(a, 25);		\
++	c ^= b; c -= rol32(b, 16);		\
++	a ^= c; a -= rol32(c, 4);		\
++	b ^= a; b -= rol32(a, 14);		\
++	c ^= b; c -= rol32(b, 24);		\
+ }
+ 
+-/* A special optimized version that handles 1 or more of u32s.
+- * The length parameter here is the number of u32s in the key.
+- */
+-static inline u32 jhash2(const u32 *k, u32 length, u32 initval)
+-{
+-	u32 a, b, c, len;
+-
+-	a = b = JHASH_GOLDEN_RATIO;
+-	c = initval;
+-	len = length;
+-
+-	while (len >= 3) {
+-		a += k[0];
+-		b += k[1];
+-		c += k[2];
+-		__jhash_mix(a, b, c);
+-		k += 3; len -= 3;
+-	}
+-
+-	c += length * 4;
+-
+-	switch (len) {
+-	case 2 : b += k[1];
+-	case 1 : a += k[0];
+-	};
+-
+-	__jhash_mix(a,b,c);
+-
+-	return c;
+-}
++/* An arbitrary initial parameter */
++#define JHASH_INITVAL		0xdeadbeef
++ 
++extern u32 jhash(const void *key, u32 length, u32 initval);
++extern u32 jhash2(const u32 *k, u32 length, u32 initval);
+ 
+ 
+-/* A special ultra-optimized versions that knows they are hashing exactly
+- * 3, 2 or 1 word(s).
+- *
+- * NOTE: In partilar the "c += length; __jhash_mix(a,b,c);" normally
+- *       done at the end is not done here.
+- */
++/* jhash_3words - hash exactly 3, 2 or 1 word(s) */
+ static inline u32 jhash_3words(u32 a, u32 b, u32 c, u32 initval)
+ {
+-	a += JHASH_GOLDEN_RATIO;
+-	b += JHASH_GOLDEN_RATIO;
++	a += JHASH_INITVAL;
++	b += JHASH_INITVAL;
+ 	c += initval;
+ 
+-	__jhash_mix(a, b, c);
++	__jhash_final(a, b, c);
+ 
+ 	return c;
+ }
+diff --git a/lib/Makefile b/lib/Makefile
+index 0bfabba..7750645 100644
+--- a/lib/Makefile
++++ b/lib/Makefile
+@@ -10,7 +10,7 @@ endif
+ lib-y := ctype.o string.o vsprintf.o cmdline.o \
+ 	 rbtree.o radix-tree.o dump_stack.o \
+ 	 idr.o int_sqrt.o extable.o prio_tree.o \
+-	 sha1.o irq_regs.o reciprocal_div.o argv_split.o \
++	 jhash.o sha1.o irq_regs.o reciprocal_div.o argv_split.o \
+ 	 proportions.o prio_heap.o ratelimit.o show_mem.o \
+ 	 is_single_threaded.o plist.o decompress.o flex_array.o
+ 
+diff --git a/lib/jhash.c b/lib/jhash.c
+new file mode 100644
+index 0000000..e0c8d11
+--- /dev/null
++++ b/lib/jhash.c
+@@ -0,0 +1,127 @@
++/* jhash.c: Jenkins hash support.
++ *
++ * Copyright (C) 2006. Bob Jenkins (bob_jenkins@burtleburtle.net)
++ *
++ * http://burtleburtle.net/bob/hash/
++ *
++ * These are the credits from Bob's sources:
++ *
++ * lookup3.c, by Bob Jenkins, May 2006, Public Domain.
++ *
++ * These are functions for producing 32-bit hashes for hash table lookup.
++ * hashword(), hashlittle(), hashlittle2(), hashbig(), mix(), and final()
++ * are externally useful functions.  Routines to test the hash are included
++ * if SELF_TEST is defined.  You can use this free for any purpose.  It's in
++ * the public domain.  It has no warranty.
++ *
++ * Copyright (C) 2009-2010 Jozsef Kadlecsik (kadlec@blackhole.kfki.hu)
++ *
++ * I've modified Bob's hash to be useful in the Linux kernel, and
++ * any bugs present are my fault.
++ * Jozsef
++ */
++#include <linux/bitops.h>
++#include <linux/module.h>
++#include <linux/unaligned/packed_struct.h>
++#include <linux/jhash.h>
++
++/* __jhash_mix -- mix 3 32-bit values reversibly. */
++#define __jhash_mix(a, b, c)			\
++{						\
++	a -= c;  a ^= rol32(c, 4);  c += b;	\
++	b -= a;  b ^= rol32(a, 6);  a += c;	\
++	c -= b;  c ^= rol32(b, 8);  b += a;	\
++	a -= c;  a ^= rol32(c, 16); c += b;	\
++	b -= a;  b ^= rol32(a, 19); a += c;	\
++	c -= b;  c ^= rol32(b, 4);  b += a;	\
++}
++
++/* jhash - hash an arbitrary key
++ * @k: sequence of bytes as key
++ * @length: the length of the key
++ * @initval: the previous hash, or an arbitray value
++ *
++ * The generic version, hashes an arbitrary sequence of bytes.
++ * No alignment or length assumptions are made about the input key.
++ *
++ * Returns the hash value of the key. The result depends on endianness.
++ */
++u32 jhash(const void *key, u32 length, u32 initval)
++{
++	u32 a, b, c;
++	const u8 *k = key;
++
++	/* Set up the internal state */
++	a = b = c = JHASH_INITVAL + length + initval;
++
++	/* All but the last block: affect some 32 bits of (a,b,c) */
++	while (length > 12) {
++		a += __get_unaligned_cpu32(k);
++		b += __get_unaligned_cpu32(k + 4);
++		c += __get_unaligned_cpu32(k + 8);
++		__jhash_mix(a, b, c);
++		length -= 12;
++		k += 12;
++	}
++	/* Last block: affect all 32 bits of (c) */
++	/* All the case statements fall through */
++	switch (length) {
++	case 12: c += (u32)k[11]<<24;
++	case 11: c += (u32)k[10]<<16;
++	case 10: c += (u32)k[9]<<8;
++	case 9:  c += k[8];
++	case 8:  b += (u32)k[7]<<24;
++	case 7:  b += (u32)k[6]<<16;
++	case 6:  b += (u32)k[5]<<8;
++	case 5:  b += k[4];
++	case 4:  a += (u32)k[3]<<24;
++	case 3:  a += (u32)k[2]<<16;
++	case 2:  a += (u32)k[1]<<8;
++	case 1:  a += k[0];
++		 __jhash_final(a, b, c);
++	case 0: /* Nothing left to add */
++		break;
++	}
++
++	return c;
++}
++EXPORT_SYMBOL(jhash);
++
++/* jhash2 - hash an array of u32's
++ * @k: the key which must be an array of u32's
++ * @length: the number of u32's in the key
++ * @initval: the previous hash, or an arbitray value
++ *
++ * Returns the hash value of the key.
++ */
++u32 jhash2(const u32 *k, u32 length, u32 initval)
++{
++	u32 a, b, c;
++
++	/* Set up the internal state */
++	a = b = c = JHASH_INITVAL + (length<<2) + initval;
++
++	/* Handle most of the key */
++	while (length > 3) {
++		a += k[0];
++		b += k[1];
++		c += k[2];
++		__jhash_mix(a, b, c);
++		length -= 3;
++		k += 3;
++	}
++
++	/* Handle the last 3 u32's: all the case statements fall through */
++	switch (length) {
++	case 3: c += k[2];
++	case 2: b += k[1];
++	case 1: a += k[0];
++		__jhash_final(a, b, c);
++	case 0:	/* Nothing left to add */
++		break;
++	}
++
++	return c;
++}
++EXPORT_SYMBOL(jhash2);
++
+diff --git a/net/ipv6/inet6_connection_sock.c b/net/ipv6/inet6_connection_sock.c
+index 0c5e3c3..c70c5a8 100644
+--- a/net/ipv6/inet6_connection_sock.c
++++ b/net/ipv6/inet6_connection_sock.c
+@@ -60,18 +60,16 @@ EXPORT_SYMBOL_GPL(inet6_csk_bind_conflict);
+ static u32 inet6_synq_hash(const struct in6_addr *raddr, const __be16 rport,
+ 			   const u32 rnd, const u16 synq_hsize)
+ {
+-	u32 a = (__force u32)raddr->s6_addr32[0];
+-	u32 b = (__force u32)raddr->s6_addr32[1];
+-	u32 c = (__force u32)raddr->s6_addr32[2];
+-
+-	a += JHASH_GOLDEN_RATIO;
+-	b += JHASH_GOLDEN_RATIO;
+-	c += rnd;
+-	__jhash_mix(a, b, c);
+-
+-	a += (__force u32)raddr->s6_addr32[3];
+-	b += (__force u32)rport;
+-	__jhash_mix(a, b, c);
++	u32 c;
++
++	c = jhash_3words((__force u32)raddr->s6_addr32[0],
++			 (__force u32)raddr->s6_addr32[1],
++			 (__force u32)raddr->s6_addr32[2],
++			 rnd);
++
++	c = jhash_2words((__force u32)raddr->s6_addr32[3],
++			 (__force u32)rport,
++			 c);
+ 
+ 	return c & (synq_hsize - 1);
+ }
+diff --git a/net/ipv6/reassembly.c b/net/ipv6/reassembly.c
+index 6d4292f..f5267b2 100644
+--- a/net/ipv6/reassembly.c
++++ b/net/ipv6/reassembly.c
+@@ -104,26 +104,22 @@ static int ip6_frag_reasm(struct frag_queue *fq, struct sk_buff *prev,
+ unsigned int inet6_hash_frag(__be32 id, const struct in6_addr *saddr,
+ 			     const struct in6_addr *daddr, u32 rnd)
+ {
+-	u32 a, b, c;
+-
+-	a = (__force u32)saddr->s6_addr32[0];
+-	b = (__force u32)saddr->s6_addr32[1];
+-	c = (__force u32)saddr->s6_addr32[2];
+-
+-	a += JHASH_GOLDEN_RATIO;
+-	b += JHASH_GOLDEN_RATIO;
+-	c += rnd;
+-	__jhash_mix(a, b, c);
+-
+-	a += (__force u32)saddr->s6_addr32[3];
+-	b += (__force u32)daddr->s6_addr32[0];
+-	c += (__force u32)daddr->s6_addr32[1];
+-	__jhash_mix(a, b, c);
+-
+-	a += (__force u32)daddr->s6_addr32[2];
+-	b += (__force u32)daddr->s6_addr32[3];
+-	c += (__force u32)id;
+-	__jhash_mix(a, b, c);
++	u32 c;
++
++	c = jhash_3words((__force u32)saddr->s6_addr32[0],
++			 (__force u32)saddr->s6_addr32[1],
++			 (__force u32)saddr->s6_addr32[2],
++			 rnd);
++
++	c = jhash_3words((__force u32)saddr->s6_addr32[3],
++			 (__force u32)daddr->s6_addr32[0],
++			 (__force u32)daddr->s6_addr32[1],
++			 c);
++
++	c =  jhash_3words((__force u32)daddr->s6_addr32[2],
++			  (__force u32)daddr->s6_addr32[3],
++			  (__force u32)id,
++			  c);
+ 
+ 	return c & (INETFRAGS_HASHSZ - 1);
+ }

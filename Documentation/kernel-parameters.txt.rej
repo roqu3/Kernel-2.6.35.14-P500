@@ -1,0 +1,11 @@
+--- Documentation/kernel-parameters.txt	2010-11-20 21:28:30.665000072 -0500
++++ Documentation/kernel-parameters.txt	2010-11-20 21:32:52.046000072 -0500
+@@ -1678,6 +1678,8 @@
+ 	noapic		[SMP,APIC] Tells the kernel to not make use of any
+ 			IOAPICs that may be present in the system.
+ 
++	noautogroup	Disable scheduler automatic task group creation.
++
+ 	nobats		[PPC] Do not use BATs for mapping kernel lowmem
+ 			on "Classic" PPC cores.
+ 

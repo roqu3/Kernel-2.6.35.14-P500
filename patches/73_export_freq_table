@@ -1,0 +1,71 @@
+--- a/arch/arm/mach-msm/cpufreq.c	2012-01-14 17:33:31.000000000 +0700
++++ b/arch/arm/mach-msm/cpufreq.c	2012-01-14 17:34:22.364816931 +0700
+@@ -48,6 +48,8 @@
+ 
+ static DEFINE_PER_CPU(struct cpufreq_suspend_t, cpufreq_suspend);
+ 
++static int override_cpu;
++
+ #define dprintk(msg...) \
+ 		cpufreq_debug_printk(CPUFREQ_DEBUG_DRIVER, "cpufreq-msm", msg)
+ 
+@@ -57,6 +59,12 @@
+ 	struct cpufreq_freqs freqs;
+ 
+ 	freqs.old = policy->cur;
++	if (override_cpu) {
++		if (policy->cur == policy->max)
++			return 0;
++		else
++			freqs.new = policy->max;
++	} else
+ 	freqs.new = new_freq;
+ 	freqs.cpu = policy->cpu;
+ 	cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
+@@ -248,6 +256,25 @@
+ 	}
+ }
+ 
++static ssize_t store_mfreq(struct sysdev_class *class,
++			struct sysdev_class_attribute *attr,
++			const char *buf, size_t count)
++{
++	u64 val;
++
++	if (strict_strtoull(buf, 0, &val) < 0) {
++		printk(KERN_ERR "Failed param conversion\n");
++		return 0;
++	}
++	if (val)
++		override_cpu = 1;
++	else
++		override_cpu = 0;
++	return count;
++}
++
++static SYSDEV_CLASS_ATTR(mfreq, 0200, NULL, store_mfreq);
++
+ static struct freq_attr *msm_cpufreq_attr[] = {
+     &cpufreq_freq_attr_scaling_available_freqs,
+     NULL,
+@@ -260,7 +287,7 @@
+ 	.verify		= msm_cpufreq_verify,
+ 	.target		= msm_cpufreq_target,
+ 	.name		= "msm",
+-	.attr    	= msm_cpufreq_attr,
++	.attr		= msm_cpufreq_attr,
+ };
+ 
+ static struct notifier_block msm_cpufreq_pm_notifier = {
+@@ -271,6 +298,11 @@
+ {
+ 	int cpu;
+ 
++	int err = sysfs_create_file(&cpu_sysdev_class.kset.kobj,
++			&attr_mfreq.attr);
++	if (err)
++		printk(KERN_ERR "Failed to create sysfs mfreq\n");
++
+ 	for_each_possible_cpu(cpu) {
+ 		mutex_init(&(per_cpu(cpufreq_suspend, cpu).suspend_mutex));
+ 		per_cpu(cpufreq_suspend, cpu).device_suspended = 0;

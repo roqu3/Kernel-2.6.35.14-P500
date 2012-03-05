@@ -1,0 +1,29 @@
+commit 2f3868e8f5b56848e77cbfb70d27fb42a15d3035
+Author: Umaro <umaro@narshe.net>
+Date:   Tue Jun 21 19:08:17 2011 +0200
+
+    ashmem: fix deadlock when system is low on memory
+    
+        When system is low on memory, allocating memory while holding the
+        ashmem_mutex may try to directly reclaim memory. Then ashmem_shrink()
+        is called in same thread. It will deadlock at acquiring ashmem_mutex.
+        This change lets ashmem_shrink() return failure if ashmem_mutex is not
+        available. Memory will be reclaimed from others.
+    
+        Change-Id: I3b6024d5477d37245f4ebde6d7069fb77af789ee
+        Signed-off-by: Yuanyuan Zhong <yuanyuan.zhong@gmail.com>
+
+diff --git a/mm/ashmem.c b/mm/ashmem.c
+index b23406e..6813b38 100644
+--- a/mm/ashmem.c
++++ b/mm/ashmem.c
+@@ -360,7 +360,8 @@ static int ashmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
+ 	if (!nr_to_scan)
+ 		return lru_count;
+ 
+-	mutex_lock(&ashmem_mutex);
++	if (!mutex_trylock(&ashmem_mutex))
++		return -1;
+ 	list_for_each_entry_safe(range, next, &ashmem_lru_list, lru) {
+ 		struct inode *inode = range->asma->file->f_dentry->d_inode;
+ 		loff_t start = range->pgstart * PAGE_SIZE;

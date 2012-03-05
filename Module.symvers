@@ -477,6 +477,7 @@
 0x00000000	cache_flush	vmlinux	EXPORT_SYMBOL_GPL
 0x00000000	sock_update_classid	vmlinux	EXPORT_SYMBOL
 0x00000000	leds_list_lock	vmlinux	EXPORT_SYMBOL_GPL
+0x00000000	lzo1x_1_compress	vmlinux	EXPORT_SYMBOL_GPL
 0x00000000	set_disk_ro	vmlinux	EXPORT_SYMBOL
 0x00000000	journal_invalidatepage	vmlinux	EXPORT_SYMBOL
 0x00000000	snd_soc_limit_volume	vmlinux	EXPORT_SYMBOL_GPL
