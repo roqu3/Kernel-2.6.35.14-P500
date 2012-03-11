@@ -1,7 +1,7 @@
 /*
  * Automatically generated C config: don't edit
  * Linux kernel version: 2.6.35.14
- * Wed Feb 29 22:15:43 2012
+ * Sat Mar 10 19:47:00 2012
  */
 #define AUTOCONF_INCLUDED
 #define CONFIG_RING_BUFFER 1
@@ -527,7 +527,7 @@
 #define CONFIG_COMMON_CLKDEV 1
 #define CONFIG_MSM_CAMERA 1
 #define CONFIG_COMPAT_BRK 1
-#define CONFIG_LOCALVERSION "-IX"
+#define CONFIG_LOCALVERSION "-X"
 #define CONFIG_RADIO_ADAPTERS 1
 #define CONFIG_CRYPTO 1
 #define CONFIG_DEFAULT_MMAP_MIN_ADDR 4096
@@ -762,7 +762,6 @@
 #define CONFIG_SCSI_MULTI_LUN 1
 #define CONFIG_MSM_ADSP 1
 #define CONFIG_NEW_LEDS 1
-#define CONFIG_SWAP 1
 #define CONFIG_CRC_CCITT 1
 #define CONFIG_ANDROID_PMEM 1
 #define CONFIG_BLK_DEV_SD 1
