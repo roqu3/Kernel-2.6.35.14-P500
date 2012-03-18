@@ -54,8 +54,6 @@ static void mcs6000_early_suspend(struct early_suspend *h);
 static void mcs6000_late_resume(struct early_suspend *h);
 #endif
 
-#define TS_SAMPLERATE_HZ 50
-
 #define LG_FW_MULTI_TOUCH
 #define LG_FW_TOUCH_SOFT_KEY		1
 #define TOUCH_SEARCH			247
@@ -74,8 +72,8 @@ static void mcs6000_late_resume(struct early_suspend *h);
  */
 enum {
 	MCS6000_DM_TRACE_NO   = 1U << 0,
-	MCS6000_DM_TRACE_YES  = 1U << 0,
-	MCS6000_DM_TRACE_FUNC = 1U << 0,
+	MCS6000_DM_TRACE_YES  = 1U << 1,
+	MCS6000_DM_TRACE_FUNC = 1U << 2,
 };
 
 static unsigned int mcs6000_debug_mask = MCS6000_DM_TRACE_NO;
@@ -140,6 +138,14 @@ enum {
 };
 
 enum {
+	NO_KEY_TOUCHED,
+	KEY1_TOUCHED,
+	KEY2_TOUCHED,
+	KEY3_TOUCHED,
+	MAX_KEY_TOUCH
+};
+
+enum {
 	MCS6000_DEV_NORMAL,
 	MCS6000_DEV_SUSPEND,
 	MCS6000_DEV_DOWNLOAD
@@ -200,9 +206,10 @@ static __inline void mcs6000_multi_ts_event_touch(int x1, int y1, int x2, int y2
 		report = 1;
 	}
 
-	if (report != 0)
+	if (report != 0) {
 		input_sync(ts->input_dev);
-	else {
+		//msleep(2);
+	} else {
 		if (MCS6000_DM_TRACE_YES & mcs6000_debug_mask)
 			DMSG("Not available touch data x1=%d, y1=%d, x2=%d, y2=%d\n", x1, y1, x2, y2);
 	}
@@ -261,6 +268,7 @@ static void mcs6000_ts_work_func(struct work_struct *work)
 	static int flipx=0;
 	static int canFlipX=1;
 	static int canFlipY=1;
+
 #endif
 	unsigned int input_type;
 	unsigned char read_buf[READ_NUM];
@@ -277,7 +285,7 @@ static void mcs6000_ts_work_func(struct work_struct *work)
 	/* read the registers of MCS6000 IC */
 	if (i2c_smbus_read_i2c_block_data(ts->client, MCS6000_TS_INPUT_INFO, READ_NUM, read_buf) < 0) {
 		printk(KERN_ERR "%s touch ic read error\n", __FUNCTION__);
-		queue_delayed_work(mcs6000_wq, &ts->work, (HZ / TS_SAMPLERATE_HZ) );
+		goto touch_retry;
 	}
 
 	input_type = read_buf[0] & 0x0f;
@@ -286,7 +294,8 @@ static void mcs6000_ts_work_func(struct work_struct *work)
 	y1 = (read_buf[1] & 0x0f) << 8;
 
 	x1 |= read_buf[2];	
-	y1 |= read_buf[3];		
+	y1 |= read_buf[3];
+		
 
 #ifdef LG_FW_MULTI_TOUCH
 	if (input_type == MULTI_POINT_TOUCH) {
@@ -295,6 +304,7 @@ static void mcs6000_ts_work_func(struct work_struct *work)
 		y2 = (read_buf[5] & 0x0f) << 8;
 		x2 |= read_buf[6];
 		y2 |= read_buf[7];
+		
 		if ( (canFlipX) && (abs(y1-y2) <= 40) )
 			{
 				// set flip flag
@@ -342,7 +352,6 @@ static void mcs6000_ts_work_func(struct work_struct *work)
 		if (input_type == SINGLE_POINT_TOUCH) {
 			mcs6000_single_ts_event_touch(x1, y1, PRESSED, ts);
 		}
-		queue_delayed_work(mcs6000_wq, &ts->work, (HZ / TS_SAMPLERATE_HZ) );
 #endif				
 	} else { /* touch released case */
 		canFlipY = canFlipX = 1;
@@ -375,8 +384,7 @@ static void mcs6000_ts_work_func(struct work_struct *work)
 
 //touch_retry:
 	if (ts->pendown) {
-		queue_delayed_work(mcs6000_wq, &ts->work, (HZ / TS_SAMPLERATE_HZ) );
-		msleep(10);
+		queue_delayed_work(mcs6000_wq, &ts->work, msecs_to_jiffies(ts->poll_interval));
 	}
 	else {
 		enable_irq(ts->num_irq);
@@ -391,7 +399,7 @@ static irqreturn_t mcs6000_ts_irq_handler(int irq, void *dev_id)
 	if (gpio_get_value(ts->intr_gpio) == 0) {
 		disable_irq_nosync(ts->client->irq);
 		ts->irq_sync--;
-		queue_delayed_work(mcs6000_wq, &ts->work, (HZ / TS_SAMPLERATE_HZ) );
+		queue_delayed_work(mcs6000_wq, &ts->work, msecs_to_jiffies(ts->poll_interval));
 	}
 	else  {
 		printk(KERN_INFO "mcs6000_ts_irq_handler: check int gpio level\n");
@@ -414,7 +422,7 @@ static void mcs6000_firmware_info(unsigned char* fw_ver, unsigned char* hw_ver)
 
 	if(!vreg_touch->refcnt){
 		mcs6000_ext_ts->power(ON);
-		msleep(10);
+		msleep(100);
 	}
 
 	*fw_ver = 0xfa;
@@ -426,7 +434,7 @@ static void mcs6000_firmware_info(unsigned char* fw_ver, unsigned char* hw_ver)
 			ret = i2c_smbus_read_byte_data(mcs6000_ext_ts->client, MCS6000_TS_FW_VERSION);
 			if (ret >= 0)
 				break;
-			msleep(10);
+			msleep(100);
 		}
 	}
 	if (ret < 0) {
@@ -445,7 +453,7 @@ static void mcs6000_firmware_info(unsigned char* fw_ver, unsigned char* hw_ver)
 			ret = i2c_smbus_read_byte_data(mcs6000_ext_ts->client, MCS6000_TS_HW_REVISION);
 			if (ret >= 0)
 				break;
-			msleep(10);
+			msleep(100);
 		}
 	}
 	if (ret < 0) {
@@ -1000,7 +1008,7 @@ static int mcs6000_ts_probe(struct i2c_client *client, const struct i2c_device_i
 			printk(KERN_ERR "mcs6000_ts_probe: power on failed\n");
 			goto err_power_failed;
 		}
-		msleep(10);
+		msleep(120);
 	}
 
 	ret = i2c_smbus_write_byte_data(ts->client, 0x1e, 0x01);	/* device reset */
@@ -1233,7 +1241,7 @@ static int mcs6000_ts_resume(struct i2c_client *client)
 		if (ret < 0)
 			printk(KERN_ERR "mcs6000_ts_resume: power on failed\n");
 	}
-	msleep(10);
+	msleep(100);
 
 	ret = i2c_smbus_write_byte_data(ts->client, 0x1d, 0x01); /* enable int */
 	if (ret < 0)
