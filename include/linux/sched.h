@@ -107,6 +107,8 @@ struct perf_event_context;
  */
 #define CLONE_KERNEL	(CLONE_FS | CLONE_FILES | CLONE_SIGHAND)
 
+extern int above_background_load(void);
+	
 /*
  * These are the constant used to fake the fixed-point load-average
  * counting. Some notes:
