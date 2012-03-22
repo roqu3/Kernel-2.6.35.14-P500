@@ -422,7 +422,7 @@ static void mcs6000_firmware_info(unsigned char* fw_ver, unsigned char* hw_ver)
 
 	if(!vreg_touch->refcnt){
 		mcs6000_ext_ts->power(ON);
-		msleep(100);
+		msleep(10);
 	}
 
 	*fw_ver = 0xfa;
@@ -434,7 +434,7 @@ static void mcs6000_firmware_info(unsigned char* fw_ver, unsigned char* hw_ver)
 			ret = i2c_smbus_read_byte_data(mcs6000_ext_ts->client, MCS6000_TS_FW_VERSION);
 			if (ret >= 0)
 				break;
-			msleep(100);
+			msleep(10);
 		}
 	}
 	if (ret < 0) {
@@ -453,7 +453,7 @@ static void mcs6000_firmware_info(unsigned char* fw_ver, unsigned char* hw_ver)
 			ret = i2c_smbus_read_byte_data(mcs6000_ext_ts->client, MCS6000_TS_HW_REVISION);
 			if (ret >= 0)
 				break;
-			msleep(100);
+			msleep(10);
 		}
 	}
 	if (ret < 0) {
@@ -1008,7 +1008,7 @@ static int mcs6000_ts_probe(struct i2c_client *client, const struct i2c_device_i
 			printk(KERN_ERR "mcs6000_ts_probe: power on failed\n");
 			goto err_power_failed;
 		}
-		msleep(120);
+		msleep(12);
 	}
 
 	ret = i2c_smbus_write_byte_data(ts->client, 0x1e, 0x01);	/* device reset */
@@ -1241,7 +1241,7 @@ static int mcs6000_ts_resume(struct i2c_client *client)
 		if (ret < 0)
 			printk(KERN_ERR "mcs6000_ts_resume: power on failed\n");
 	}
-	msleep(100);
+	msleep(10);
 
 	ret = i2c_smbus_write_byte_data(ts->client, 0x1d, 0x01); /* enable int */
 	if (ret < 0)
