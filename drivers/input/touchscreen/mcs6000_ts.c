@@ -382,7 +382,7 @@ static void mcs6000_ts_work_func(struct work_struct *work)
 		}
 	}
 
-//touch_retry:
+touch_retry:
 	if (ts->pendown) {
 		queue_delayed_work(mcs6000_wq, &ts->work, msecs_to_jiffies(ts->poll_interval));
 	}
