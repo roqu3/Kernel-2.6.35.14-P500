@@ -650,3 +650,7 @@ usr/modules.builtin
 usr/modules.order
 vmlinux
 arch/arm/mach-msm/acpuclock.c.m70
+arch/arm/mach-msm/acpuclock.c2.old
+drivers/input/touchscreen/mcs6000_ts.c.lg
+makezip.sh
+
