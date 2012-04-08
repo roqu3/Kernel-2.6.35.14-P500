@@ -1,7 +1,7 @@
 /*
  * Automatically generated C config: don't edit
  * Linux kernel version: 2.6.35.14
- * Sat Mar 31 22:27:44 2012
+ * Wed Apr  4 17:56:56 2012
  */
 #define AUTOCONF_INCLUDED
 #define CONFIG_RING_BUFFER 1
@@ -568,6 +568,7 @@
 #define CONFIG_DIAG_CHAR 1
 #define CONFIG_NETFILTER_XT_MATCH_CONNLIMIT 1
 #define CONFIG_IP_NF_ARPFILTER 1
+#define CONFIG_KSM 1
 #define CONFIG_MSM_IDLE_STATS_BUCKET_COUNT 10
 #define CONFIG_NF_NAT_H323 1
 #define CONFIG_MEDIA_TUNER_MC44S803 1
