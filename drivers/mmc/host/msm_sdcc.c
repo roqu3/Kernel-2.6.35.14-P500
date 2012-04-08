@@ -1527,7 +1527,6 @@ static void msmsdcc_early_suspend(struct early_suspend *h)
 		container_of(h, struct msmsdcc_host, early_suspend);
 	unsigned long flags;
 /* LGE_CHANGE_S [jisung.yang@lge.com] 2010-04-24, don't do this to WLAN */
-	printk(KERN_ERR "msmsdcc_early_suspend : start \n");
 #ifdef  CONFIG_BCM4325_GPIO_WL_RESET
 	if ( host->plat->status_irq != gpio_to_irq(CONFIG_BCM4325_GPIO_WL_RESET) )
 #endif
@@ -1562,7 +1561,6 @@ static void msmsdcc_late_resume(struct early_suspend *h)
 	}
 /* LGE_CHANGE_S [yoohoo@lge.com] 2009-10-24, don't do this to WLAN */
 	}
-	printk(KERN_ERR "msmsdcc_late_resume : END \n");
 /* LGE_CHANGE_S [jisung.yang@lge.com] 2010-04-24, don't do this to WLAN */
 };
 #endif
@@ -2024,7 +2022,6 @@ msmsdcc_runtime_suspend(struct device *dev)
 	struct msmsdcc_host *host = mmc_priv(mmc);
 	int rc = 0;
 
-	printk("%s: start\n", __func__);
 	
 	if (mmc) {
 		host->sdcc_suspending = 1;
@@ -2074,7 +2071,6 @@ msmsdcc_runtime_suspend(struct device *dev)
 		host->sdcc_suspending = 0;
 		mmc->suspend_task = NULL;
 	}
-	printk("%s: end\n", __func__);
 	return rc;
 }
 
