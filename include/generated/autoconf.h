@@ -1,7 +1,7 @@
 /*
  * Automatically generated C config: don't edit
  * Linux kernel version: 2.6.35.14
- * Wed Apr  4 17:56:56 2012
+ * Sun Apr  8 20:14:00 2012
  */
 #define AUTOCONF_INCLUDED
 #define CONFIG_RING_BUFFER 1
@@ -210,6 +210,7 @@
 #define CONFIG_VIDEO_IR 1
 #define CONFIG_IP_NF_TARGET_MASQUERADE 1
 #define CONFIG_PROC_PAGE_MONITOR 1
+#define CONFIG_CC_OPTIMIZE_FOR_SIZE 1
 #define CONFIG_NF_NAT_PROTO_DCCP 1
 #define CONFIG_USB_VIDEO_CLASS_INPUT_EVDEV 1
 #define CONFIG_RD_LZO 1
