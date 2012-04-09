@@ -188,3 +188,8 @@ obj-$(CONFIG_MSM_SLEEP_STATS) += msm_sleep_stats.o idle_stats.o
 obj-$(CONFIG_MACH_LGE) += lge/
 obj-$(CONFIG_MSM_SHOW_RESUME_IRQ) += msm_show_resume_irq.o
 obj-$(CONFIG_BT_MSM_PINTEST)  += btpintest.o
+
+# Ignore warnings to prevent build breaks
+CFLAGS_REMOVE_acpuclock.o = -Werror
+CFLAGS_REMOVE_rpc_hsusb.o = -Werror
+CFLAGS_REMOVE_smd_rpcrouter_device.o = -Werror

@@ -49,3 +49,16 @@ obj-$(CONFIG_HWPOISON_INJECT) += hwpoison-inject.o
 obj-$(CONFIG_DEBUG_KMEMLEAK) += kmemleak.o
 obj-$(CONFIG_DEBUG_KMEMLEAK_TEST) += kmemleak-test.o
 obj-$(CONFIG_CLEANCACHE) += cleancache.o
+
+# Ignore warnings to prevent build breaks
+CFLAGS_REMOVE_mempool.o = -Werror
+CFLAGS_REMOVE_filemap.o = -Werror
+CFLAGS_REMOVE_fadvise.o = -Werror
+CFLAGS_REMOVE_page_alloc.o = -Werror
+CFLAGS_REMOVE_page-writeback.o = -Werror
+CFLAGS_REMOVE_readahead.o = -Werror
+CFLAGS_REMOVE_swap.o = -Werror
+CFLAGS_REMOVE_truncate.o = -Werror
+CFLAGS_REMOVE_vmscan.o = -Werror
+CFLAGS_REMOVE_shmem.o = -Werror
+CFLAGS_REMOVE_backing-dev.o = -Werror

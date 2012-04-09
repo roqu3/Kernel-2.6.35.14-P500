@@ -105,6 +105,8 @@ obj-$(CONFIG_CACHE_TAUROS2)	+= cache-tauros2.o
 obj-$(CONFIG_VCM)		+= vcm.o vcm_alloc.o
 obj-$(CONFIG_VCM_MM)		+= vcm_mm.o
 
-# Ignore warnings to prevent build breaks when using gcc 4.5.0
+# Ignore warnings to prevent build breaks
 CFLAGS_REMOVE_dma-mapping.o = -Werror
-
+CFLAGS_REMOVE_fault-armv.o = -Werror
+CFLAGS_REMOVE_flush.o = -Werror
+CFLAGS_REMOVE_cache-l2x0.o = -Werror

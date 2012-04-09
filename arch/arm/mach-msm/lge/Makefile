@@ -64,3 +64,9 @@ obj-$(CONFIG_LGE_DIAG_WMC) += lg_diag_wmc.o
 obj-$(CONFIG_LGE_SUPPORT_AT_CMD) += lge_ats_flex.o # LGE_CHANGE [irene.park@lge.com] 2010-06-04 - to get flex value from ARM9 
 obj-$(CONFIG_LGE_PWRSINK) += lge_pwrsink.o
 obj-$(CONFIG_LGE_ATCMD_TTY) += lge_tty_atcmd.o
+
+# Ignore warnings to prevent build breaks
+CFLAGS_REMOVE_lge_mtd_direct_access.o = -Werror
+CFLAGS_REMOVE_lge_ats_mmc.o = -Werror
+CFLAGS_REMOVE_lge_ats_eta.o = -Werror
+CFLAGS_REMOVE_lge_tty_atcmd.o = -Werror

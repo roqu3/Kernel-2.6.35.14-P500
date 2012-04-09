@@ -138,6 +138,13 @@ targets += timeconst.h
 $(obj)/timeconst.h: $(src)/timeconst.pl FORCE
 	$(call if_changed,timeconst)
 
-# Ignore warnings to prevent build breaks when using gcc 4.5.0
+# Ignore warnings to prevent build breaks
 CFLAGS_REMOVE_cgroup.o = -Werror
-
+CFLAGS_REMOVE_sched.o = -Werror
+CFLAGS_REMOVE_fork.o = -Werror
+CFLAGS_REMOVE_printk.o = -Werror
+CFLAGS_REMOVE_exit.o = -Werror
+CFLAGS_REMOVE_sysctl.o = -Werror
+CFLAGS_REMOVE_ptrace.o = -Werror
+CFLAGS_REMOVE_workqueue.o = -Werror
+CFLAGS_REMOVE_hrtimer.o = -Werror

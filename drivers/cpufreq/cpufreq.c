@@ -1149,8 +1149,7 @@ static int __cpufreq_remove_dev(struct sys_device *sys_dev)
 	kfree(data);
 	per_cpu(cpufreq_cpu_data, cpu) = NULL;
  
-	cpufreq_debug_enable_ratelimit();
-
+//	cpufreq_debug_enable_ratelimit();
 
 	return 0;
 }
