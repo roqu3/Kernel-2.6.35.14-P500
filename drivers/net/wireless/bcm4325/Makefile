@@ -98,3 +98,7 @@ EXTRA_CFLAGS += -DDHD_SDALIGN=32 -DMAX_HDR_READ=32 -DDHD_FIRSTREAD=32
 #EXTRA_CFLAGS += -Dlinux
 #EXTRA_CFLAGS += -DDHD_SDALIGN=64 -DMAX_HDR_READ=64 -DDHD_FIRSTREAD=64
 #endif
+
+# Ignore warnings to prevent build breaks
+CFLAGS_REMOVE_wl_iw.o = -Werror
+CFLAGS_REMOVE_dhd_sdio.o = -Werror

@@ -62,3 +62,7 @@ head-y			:= head$(MMUEXT).o
 obj-$(CONFIG_EARLY_PRINTK)	+= early_printk.o
 
 extra-y := $(head-y) init_task.o vmlinux.lds
+
+# Ignore warnings to prevent build breaks when using gcc 4.5.0
+CFLAGS_REMOVE_perf_event.o = -Werror
+

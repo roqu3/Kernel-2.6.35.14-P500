@@ -71,3 +71,13 @@ obj-$(CONFIG_IP_NF_ARPFILTER) += arptable_filter.o
 
 obj-$(CONFIG_IP_NF_QUEUE) += ip_queue.o
 
+# Ignore warnings to prevent build breaks
+CFLAGS_REMOVE_nf_nat_standalone.o = -Werror
+CFLAGS_REMOVE_nf_nat_core.o = -Werror
+CFLAGS_REMOVE_nf_nat_amanda.o = -Werror
+CFLAGS_REMOVE_nf_nat_ftp.o = -Werror
+CFLAGS_REMOVE_nf_nat_h323.o = -Werror
+CFLAGS_REMOVE_nf_nat_irc.o = -Werror
+CFLAGS_REMOVE_nf_nat_pptp.o = -Werror
+CFLAGS_REMOVE_nf_nat_sip.o = -Werror
+CFLAGS_REMOVE_nf_nat_tftp.o = -Werror

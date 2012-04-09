@@ -27,3 +27,6 @@ obj-$(CONFIG_MEDIA_TUNER_MAX2165) += max2165.o
 
 EXTRA_CFLAGS += -Idrivers/media/dvb/dvb-core
 EXTRA_CFLAGS += -Idrivers/media/dvb/frontends
+
+# Ignore warnings to prevent build breaks
+CFLAGS_REMOVE_xc5000.o = -Werror

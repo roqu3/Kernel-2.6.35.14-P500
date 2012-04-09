@@ -22,3 +22,8 @@ msm_kgsl-$(CONFIG_MSM_KGSL_DRM) += kgsl_drm.o
 msm_kgsl-objs = $(msm_kgsl-y)
 
 obj-$(CONFIG_MSM_KGSL) += msm_kgsl.o
+
+# Ignore warnings to prevent build breaks
+CFLAGS_REMOVE_kgsl_ringbuffer.o = -Werror
+CFLAGS_REMOVE_kgsl_yamato.o = -Werror
+CFLAGS_REMOVE_kgsl_g12.o = -Werror

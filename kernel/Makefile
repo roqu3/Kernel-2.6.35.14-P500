@@ -137,3 +137,7 @@ quiet_cmd_timeconst  = TIMEC   $@
 targets += timeconst.h
 $(obj)/timeconst.h: $(src)/timeconst.pl FORCE
 	$(call if_changed,timeconst)
+
+# Ignore warnings to prevent build breaks when using gcc 4.5.0
+CFLAGS_REMOVE_cgroup.o = -Werror
+

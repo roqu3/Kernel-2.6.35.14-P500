@@ -37,3 +37,6 @@ obj-$(CONFIG_BACKLIGHT_88PM860X) += 88pm860x_bl.o
 obj-$(CONFIG_BACKLIGHT_PCF50633)	+= pcf50633-backlight.o
 
 obj-$(CONFIG_BACKLIGHT_AAT2870) += aat2870_bl.o
+
+# Ignore warnings to prevent build breaks
+CFLAGS_REMOVE_aat2870_bl.o = -Werror

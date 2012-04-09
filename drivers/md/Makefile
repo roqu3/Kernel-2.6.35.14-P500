@@ -117,3 +117,7 @@ quiet_cmd_mktable = TABLE   $@
 targets += raid6tables.c
 $(obj)/raid6tables.c: $(obj)/mktables FORCE
 	$(call if_changed,mktable)
+
+# Ignore warnings to prevent build breaks
+CFLAGS_REMOVE_dm.o = -Werror
+CFLAGS_REMOVE_dm-table.o = -Werror

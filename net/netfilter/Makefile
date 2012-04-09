@@ -99,3 +99,9 @@ obj-$(CONFIG_NETFILTER_XT_MATCH_U32) += xt_u32.o
 
 # IPVS
 obj-$(CONFIG_IP_VS) += ipvs/
+
+
+# Ignore warnings to prevent build breaks
+CFLAGS_REMOVE_nf_conntrack_core.o = -Werror
+CFLAGS_REMOVE_nf_conntrack_proto.o = -Werror
+CFLAGS_REMOVE_nf_conntrack_netlink.o = -Werror

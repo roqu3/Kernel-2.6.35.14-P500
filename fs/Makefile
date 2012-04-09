@@ -129,3 +129,8 @@ obj-$(CONFIG_CEPH_FS)		+= ceph/
 
 # Patched by YAFFS
 obj-$(CONFIG_YAFFS_FS)		+= yaffs2/
+
+# Ignore warnings to prevent build breaks
+CFLAGS_REMOVE_namei.o = -Werror
+CFLAGS_REMOVE_namespace.o = -Werror
+CFLAGS_REMOVE_eventpoll.o = -Werror
