@@ -445,11 +445,8 @@ csum_copy_err:
 	}
 	unlock_sock_fast(sk, slow);
 
-	if (noblock)
+	if (flags & MSG_DONTWAIT)
 		return -EAGAIN;
-
-	/* starting over for a new packet */
-	msg->msg_flags &= ~MSG_TRUNC;
 	goto try_again;
 }
 

@@ -469,7 +469,6 @@ recurse:
 out_free:
 	if (b) {
 		kobject_put(&b->kobj);
-		list_del(&b->miscj);
 		kfree(b);
 	}
 	return err;

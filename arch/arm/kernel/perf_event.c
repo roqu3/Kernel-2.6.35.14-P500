@@ -547,7 +547,7 @@ void
 hw_perf_enable(void)
 {
 	/* Enable all of the perf events on hardware. */
-	int idx, enabled = 0;
+	int idx;
 	struct cpu_hw_events *cpuc = &__get_cpu_var(cpu_hw_events);
 
 	if (!armpmu)
@@ -560,11 +560,9 @@ hw_perf_enable(void)
 			continue;
 
 		armpmu->enable(&event->hw, idx);
-		enabled = 1;
 	}
 
-	if (enabled)
-		armpmu->start();
+	armpmu->start();
 }
 
 void

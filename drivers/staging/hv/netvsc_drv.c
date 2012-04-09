@@ -19,7 +19,6 @@
  *   Hank Janssen  <hjanssen@microsoft.com>
  */
 #include <linux/init.h>
-#include <linux/atomic.h>
 #include <linux/module.h>
 #include <linux/highmem.h>
 #include <linux/device.h>
@@ -46,7 +45,7 @@
 struct net_device_context {
 	/* point back to our device context */
 	struct vm_device *device_ctx;
-	atomic_t avail;
+	unsigned long avail;
 	struct work_struct work;
 };
 
@@ -134,9 +133,7 @@ static void netvsc_xmit_completion(void *context)
 
 		dev_kfree_skb_any(skb);
 
-		atomic_add(num_pages, &net_device_ctx->avail);
-		if (atomic_read(&net_device_ctx->avail) >=
-				PACKET_PAGES_HIWATER)
+		if ((net_device_ctx->avail += num_pages) >= PACKET_PAGES_HIWATER)
  			netif_wake_queue(net);
 	}
 
@@ -162,7 +159,7 @@ static int netvsc_start_xmit(struct sk_buff *skb, struct net_device *net)
 
 	/* Add 1 for skb->data and additional one for RNDIS */
 	num_pages = skb_shinfo(skb)->nr_frags + 1 + 1;
-	if (num_pages > atomic_read(&net_device_ctx->avail))
+	if (num_pages > net_device_ctx->avail)
 		return NETDEV_TX_BUSY;
 
 	/* Allocate a netvsc packet based on # of frags. */
@@ -221,8 +218,7 @@ static int netvsc_start_xmit(struct sk_buff *skb, struct net_device *net)
 			   net->stats.tx_packets,
 			   net->stats.tx_bytes);
 
-		atomic_sub(num_pages, &net_device_ctx->avail);
-		if (atomic_read(&net_device_ctx->avail) < PACKET_PAGES_LOWATER)
+		if ((net_device_ctx->avail -= num_pages) < PACKET_PAGES_LOWATER)
 			netif_stop_queue(net);
 	} else {
 		/* we are shutting down or bus overloaded, just drop packet */
@@ -410,7 +406,7 @@ static int netvsc_probe(struct device *device)
 
 	net_device_ctx = netdev_priv(net);
 	net_device_ctx->device_ctx = device_ctx;
-	atomic_set(&net_device_ctx->avail, ring_size);
+	net_device_ctx->avail = ring_size;
 	dev_set_drvdata(device, net);
 	INIT_WORK(&net_device_ctx->work, netvsc_send_garp);
 

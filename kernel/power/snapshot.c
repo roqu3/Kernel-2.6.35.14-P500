@@ -1199,11 +1199,7 @@ static void free_unnecessary_pages(void)
 		to_free_highmem = alloc_highmem - save;
 	} else {
 		to_free_highmem = 0;
-		save -= alloc_highmem;
-		if (to_free_normal > save)
-			to_free_normal -= save;
-		else
-			to_free_normal = 0;
+		to_free_normal -= save - alloc_highmem;
 	}
 
 	memory_bm_position_reset(&copy_bm);
