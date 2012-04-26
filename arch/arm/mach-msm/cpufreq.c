@@ -140,7 +140,8 @@ static int msm_cpufreq_target(struct cpufreq_policy *policy,
 	} else {
 		cancel_work_sync(&cpu_work->work);
 		init_completion(&cpu_work->complete);
-		schedule_work_on(policy->cpu, &cpu_work->work);
+		//schedule_work_on(policy->cpu, &cpu_work->work);
+		queue_work_on(policy->cpu, msm_cpufreq_wq, &cpu_work->work);
 		wait_for_completion(&cpu_work->complete);
 	}
 
