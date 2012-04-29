@@ -715,7 +715,7 @@ enum {
 
 const_debug unsigned int sysctl_sched_features =
 #include "sched_features.h"
-	0;
+	24189;
 
 #undef SCHED_FEAT
 
