@@ -1,8 +1,8 @@
-/* This file is auto generated, version 6 */
+/* This file is auto generated, version 9 */
 /*  PREEMPT */
 #define UTS_MACHINE "arm"
-#define UTS_VERSION "#6 PREEMPT Sat Apr 21 21:41:42 PET 2012"
-#define LINUX_COMPILE_TIME "21:41:42"
+#define UTS_VERSION "#9 PREEMPT Sun Apr 29 20:31:19 PET 2012"
+#define LINUX_COMPILE_TIME "20:31:19"
 #define LINUX_COMPILE_BY "roq"
 #define LINUX_COMPILE_HOST "mioptimusone[dot]com"
 #define LINUX_COMPILE_DOMAIN "(none)"

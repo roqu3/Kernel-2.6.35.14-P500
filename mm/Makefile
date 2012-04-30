@@ -48,6 +48,7 @@ obj-$(CONFIG_MEMORY_FAILURE) += memory-failure.o
 obj-$(CONFIG_HWPOISON_INJECT) += hwpoison-inject.o
 obj-$(CONFIG_DEBUG_KMEMLEAK) += kmemleak.o
 obj-$(CONFIG_DEBUG_KMEMLEAK_TEST) += kmemleak-test.o
+<<<<<<< HEAD
 obj-$(CONFIG_CLEANCACHE) += cleancache.o
 
 # Ignore warnings to prevent build breaks
@@ -62,3 +63,5 @@ CFLAGS_REMOVE_truncate.o = -Werror
 CFLAGS_REMOVE_vmscan.o = -Werror
 CFLAGS_REMOVE_shmem.o = -Werror
 CFLAGS_REMOVE_backing-dev.o = -Werror
+=======
+>>>>>>> parent of 71a4984... Add cleancache
