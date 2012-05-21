@@ -171,7 +171,7 @@ static int is_full_zero(const void *s1, size_t len)
 
 #endif
 #else
-static int is_full_zero(const void *s1, size_t len)
+static int is_full_zero(void *s1, size_t len)
 {
 	unsigned long *src = s1;
 	int i;
@@ -645,11 +645,21 @@ static inline void free_tree_node(struct tree_node *node)
 	kmem_cache_free(tree_node_cache, node);
 }
 
-static void uksm_drop_anon_vma(struct rmap_item *rmap_item)
+static void drop_anon_vma(struct rmap_item *rmap_item)
 {
 	struct anon_vma *anon_vma = rmap_item->anon_vma;
 
-	drop_anon_vma(anon_vma);
+	if (atomic_dec_and_lock(&anon_vma->external_refcount, &anon_vma->lock)) {
+		int empty = list_empty(&anon_vma->head);
+		spin_unlock(&anon_vma->lock);
+		if (empty)
+			anon_vma_free(anon_vma);
+	}
+}
+
+static void uksm_drop_anon_vma(struct rmap_item *rmap_item)
+{
+	drop_anon_vma(rmap_item);
 }
 
 
@@ -1258,7 +1268,6 @@ static int write_protect_page(struct vm_area_struct *vma, struct page *page,
 	if (addr == -EFAULT)
 		goto out;
 
-	BUG_ON(PageTransCompound(page));
 	ptep = page_check_address(page, mm, addr, &ptl, 0);
 	if (!ptep)
 		goto out;
@@ -1344,7 +1353,6 @@ static int replace_page(struct vm_area_struct *vma, struct page *page,
 		goto out;
 
 	pmd = pmd_offset(pud, addr);
-	BUG_ON(pmd_trans_huge(*pmd));
 	if (!pmd_present(*pmd))
 		goto out;
 
@@ -1445,47 +1453,6 @@ static inline int check_collision(struct rmap_item *rmap_item,
 	return err;
 }
 
-static struct page *page_trans_compound_anon(struct page *page)
-{
-	if (PageTransCompound(page)) {
-		struct page *head = compound_trans_head(page);
-		/*
-		 * head may actually be splitted and freed from under
-		 * us but it's ok here.
-		 */
-		if (PageAnon(head))
-			return head;
-	}
-	return NULL;
-}
-
-static int page_trans_compound_anon_split(struct page *page)
-{
-	int ret = 0;
-	struct page *transhuge_head = page_trans_compound_anon(page);
-	if (transhuge_head) {
-		/* Get the reference on the head to split it. */
-		if (get_page_unless_zero(transhuge_head)) {
-			/*
-			 * Recheck we got the reference while the head
-			 * was still anonymous.
-			 */
-			if (PageAnon(transhuge_head))
-				ret = split_huge_page(transhuge_head);
-			else
-				/*
-				 * Retry later if split_huge_page run
-				 * from under us.
-				 */
-				ret = 1;
-			put_page(transhuge_head);
-		} else
-			/* Retry later if split_huge_page run from under us. */
-			ret = 1;
-	}
-	return ret;
-}
-
 /**
  * Try to merge a rmap_item.page with a kpage in stable node. kpage must
  * already be a ksm page.
@@ -1510,10 +1477,6 @@ static int try_to_merge_with_uksm_page(struct rmap_item *rmap_item,
 		err = 0;
 		goto out;
 	}
-
-	if (PageTransCompound(page) && page_trans_compound_anon_split(page))
-		goto out;
-	BUG_ON(PageTransCompound(page));
 
 	if (!PageAnon(page) || !PageKsm(kpage))
 		goto out;
@@ -1637,14 +1600,6 @@ static int try_to_merge_two_pages(struct rmap_item *rmap_item,
 
 	if (rmap_item->page == tree_rmap_item->page)
 		goto out;
-
-	if (PageTransCompound(page) && page_trans_compound_anon_split(page))
-		goto out;
-	BUG_ON(PageTransCompound(page));
-
-	if (PageTransCompound(tree_page) && page_trans_compound_anon_split(tree_page))
-		goto out;
-	BUG_ON(PageTransCompound(tree_page));
 
 	if (!PageAnon(page) || !PageAnon(tree_page))
 		goto out;
@@ -1851,7 +1806,7 @@ static int try_merge_rmap_item(struct rmap_item *item,
 	get_page(tree_page);
 	page_add_anon_rmap(tree_page, vma, addr);
 
-	flush_cache_page(vma, addr, pte_pfn(ptep));
+	flush_cache_page(vma, addr, pte_pfn(*ptep));
 	ptep_clear_flush(vma, addr, ptep);
 	set_pte_at_notify(vma->vm_mm, addr, ptep,
 			  mk_pte(tree_page, vma->vm_page_prot));
@@ -2443,7 +2398,7 @@ static void hold_anon_vma(struct rmap_item *rmap_item,
 			  struct anon_vma *anon_vma)
 {
 	rmap_item->anon_vma = anon_vma;
-	get_anon_vma(anon_vma);
+	atomic_inc(&anon_vma->external_refcount);
 }
 
 
@@ -2695,10 +2650,6 @@ int cmp_and_merge_zero_page(struct vm_area_struct *vma, struct page *page)
 
 	if (uksm_test_exit(mm))
 		goto out;
-
-	if (PageTransCompound(page) && page_trans_compound_anon_split(page))
-		goto out;
-	BUG_ON(PageTransCompound(page));
 
 	if (!PageAnon(page))
 		goto out;
@@ -3198,7 +3149,7 @@ static struct rmap_item *get_next_rmap_item(struct vma_slot *slot)
 	if (IS_ERR_OR_NULL(page))
 		goto nopage;
 
-	if (!PageAnon(page) && !page_trans_compound_anon(page))
+	if (!PageAnon(page))
 		goto putpage;
 
 	/*check is zero_page pfn or uksm_zero_page*/
@@ -4511,7 +4462,7 @@ again:
 			struct anon_vma_chain *vmac;
 			struct vm_area_struct *vma;
 
-			anon_vma_lock(anon_vma);
+			spin_lock(&anon_vma->lock);
 			list_for_each_entry(vmac, &anon_vma->head,
 					    same_anon_vma) {
 				vma = vmac->vma;
@@ -4541,8 +4492,7 @@ again:
 				if (!search_new_forks || !mapcount)
 					break;
 			}
-
-			anon_vma_unlock(anon_vma);
+			spin_unlock(&anon_vma->lock);
 			if (!mapcount)
 				goto out;
 		}
@@ -4577,7 +4527,7 @@ again:
 			struct anon_vma_chain *vmac;
 			struct vm_area_struct *vma;
 
-			anon_vma_lock(anon_vma);
+			spin_lock(&anon_vma->lock);
 			list_for_each_entry(vmac, &anon_vma->head,
 					    same_anon_vma) {
 				vma = vmac->vma;
@@ -4600,11 +4550,11 @@ again:
 				ret = try_to_unmap_one(page, vma,
 						       address, flags);
 				if (ret != SWAP_AGAIN || !page_mapped(page)) {
-					anon_vma_unlock(anon_vma);
+					spin_unlock(&anon_vma->lock);
 					goto out;
 				}
 			}
-			anon_vma_unlock(anon_vma);
+			spin_unlock(&anon_vma->lock);
 		}
 	}
 	if (!search_new_forks++)
@@ -4639,7 +4589,7 @@ again:
 			struct anon_vma_chain *vmac;
 			struct vm_area_struct *vma;
 
-			anon_vma_lock(anon_vma);
+			spin_lock(&anon_vma->lock);
 			list_for_each_entry(vmac, &anon_vma->head,
 					    same_anon_vma) {
 				vma = vmac->vma;
@@ -4659,7 +4609,7 @@ again:
 					goto out;
 				}
 			}
-			anon_vma_unlock(anon_vma);
+			spin_unlock(&anon_vma->lock);
 		}
 	}
 	if (!search_new_forks++)
