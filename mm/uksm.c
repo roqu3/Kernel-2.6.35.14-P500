@@ -371,7 +371,7 @@ static unsigned long uksm_pages_unshared;
  * Number of pages ksmd should scan in one batch. This is the top speed for
  * richly duplicated areas.
  */
-static unsigned long uksm_scan_batch_pages = 60000;
+static unsigned long uksm_scan_batch_pages = 32768;
 
 /* Milliseconds ksmd should sleep between batches */
 static unsigned int uksm_sleep_jiffies;
@@ -382,7 +382,7 @@ static unsigned int uksm_sleep_jiffies;
  * of the thrashing ratio of all areas. Any area with a bigger thrashing ratio
  * will be considered as having a zero duplication ratio.
  */
-static unsigned int uksm_thrash_threshold = 50;
+static unsigned int uksm_thrash_threshold = 20;
 
 /* To avoid the float point arithmetic, this is the scale of a
  * deduplication ratio number.
