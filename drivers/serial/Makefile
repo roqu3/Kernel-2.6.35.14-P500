@@ -87,3 +87,7 @@ obj-$(CONFIG_SERIAL_TIMBERDALE)	+= timbuart.o
 obj-$(CONFIG_SERIAL_GRLIB_GAISLER_APBUART) += apbuart.o
 obj-$(CONFIG_SERIAL_ALTERA_JTAGUART) += altera_jtaguart.o
 obj-$(CONFIG_SERIAL_ALTERA_UART) += altera_uart.o
+
+# Ignore warnings to prevent build breaks
+CFLAGS_REMOVE_msm_serial_hs.o = -Werror
+

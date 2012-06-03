@@ -190,7 +190,8 @@ SUBARCH := arm
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
 export KBUILD_BUILDHOST := $(SUBARCH)
 ARCH		?= $(SUBARCH)
-CROSS_COMPILE	?= /home/roq/linaro/android-toolchain-eabi/bin/arm-eabi-
+#CROSS_COMPILE	?= /home/roq/linaro/android-toolchain-eabi/bin/arm-eabi-
+CROSS_COMPILE	?= /home/roq/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_EABI/bin/arm-eabi-
 #CROSS_COMPILE	?= /home/roq/android-prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-
 #CROSS_COMPILE	?= arm-eabi-
 CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)

@@ -62,3 +62,4 @@ CFLAGS_REMOVE_truncate.o = -Werror
 CFLAGS_REMOVE_vmscan.o = -Werror
 CFLAGS_REMOVE_shmem.o = -Werror
 CFLAGS_REMOVE_backing-dev.o = -Werror
+CFLAGS_REMOVE_mmap.o = -Werror
