@@ -840,7 +840,7 @@ static int kgsl_yamato_start(struct kgsl_device *device, unsigned int init_ram)
 			      KGSL_DEVICE_MEMSTORE_OFFSET(ref_wait_ts),
 			      init_reftimestamp);
 
-	kgsl_yamato_regwrite(device, REG_RBBM_DEBUG, 0x000C0000);
+	kgsl_yamato_regwrite(device, REG_RBBM_DEBUG, 0x00080000);
 
 
 	KGSL_DRV_DBG("enabling RBBM interrupts  mask 0x%08lx\n",
