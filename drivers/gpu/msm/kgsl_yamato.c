@@ -703,7 +703,6 @@ kgsl_yamato_init(struct kgsl_device *device)
 	}
 
 	device->flags &= ~KGSL_FLAGS_SOFT_RESET;
-	wake_lock_init(&device->idle_wakelock, WAKE_LOCK_IDLE, device->name);
 	return 0;
 
 error_close_rb:
@@ -757,7 +756,6 @@ int kgsl_yamato_close(struct kgsl_device *device)
 		device->work_queue = NULL;
 	}
 
-	wake_lock_destroy(&device->idle_wakelock);
 	KGSL_DRV_VDBG("return %d\n", 0);
 	return 0;
 }
