@@ -552,7 +552,7 @@ kgsl_yamato_init_pwrctrl(struct kgsl_device *device)
 	device->pwrctrl.clk_freq[KGSL_AXI_HIGH] = pdata->high_axi_3d;
 	/* per test, io_fraction default value is set to 33% for best
 	   power/performance result */
-	device->pwrctrl.io_fraction = 50;
+	device->pwrctrl.io_fraction = 33;
 	device->pwrctrl.io_count = 0;
 	device->pwrctrl.ebi1_clk = clk_get(NULL, "ebi1_kgsl_clk");
 	if (IS_ERR(device->pwrctrl.ebi1_clk))
