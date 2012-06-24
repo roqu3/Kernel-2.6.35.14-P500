@@ -191,7 +191,11 @@ SUBARCH := arm
 export KBUILD_BUILDHOST := $(SUBARCH)
 ARCH		?= $(SUBARCH)
 #CROSS_COMPILE	?= /home/roq/linaro/android-toolchain-eabi/bin/arm-eabi-
-CROSS_COMPILE	?= /home/roq/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_EABI/bin/arm-none-eabi-
+#Latest linaro toolchain
+#CROSS_COMPILE	?= /home/roq/linaro47/bin/arm-linux-gnueabihf-
+# ezterry experimental toolchain http://forum.xda-developers.com/showthread.php?t=1686310
+CROSS_COMPILE	?= /home/roq/ezterry-toolchain-463/bin/arm-linux-androideabi-
+#CROSS_COMPILE	?= /home/roq/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_EABI/bin/arm-none-eabi-
 #CROSS_COMPILE	?= /home/roq/android-prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-
 #CROSS_COMPILE	?= arm-eabi-
 CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
@@ -337,7 +341,7 @@ CHECK		= sparse
 LGE_CF		= -D__CHECK_ENDIAN__ -Wcast-truncate -Wno-paren-string -Wtypesign
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF) $(LGE_CF)
-MODFLAGS	= -DMODULE
+MODFLAGS	= -DMODULE -fno-pic
 CFLAGS_MODULE   = $(MODFLAGS)
 AFLAGS_MODULE   = $(MODFLAGS)
 LDFLAGS_MODULE  = -T $(srctree)/scripts/module-common.lds
