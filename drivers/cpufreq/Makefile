@@ -15,6 +15,7 @@ obj-$(CONFIG_CPU_FREQ_GOV_SMOOTHASS)    += cpufreq_smoothass.o
 obj-$(CONFIG_CPU_FREQ_GOV_SAVAGEDZEN) 	+= cpufreq_savagedzen.o
 obj-$(CONFIG_CPU_FREQ_GOV_SMARTASS2)  	+= cpufreq_smartass2.o
 obj-$(CONFIG_CPU_FREQ_GOV_MINMAX)  	+= cpufreq_minmax.o
+obj-$(CONFIG_CPU_FREQ_GOV_INTELLIDEMAND)+= cpufreq_intellidemand.o
 
 # CPUfreq cross-arch helpers
 obj-$(CONFIG_CPU_FREQ_TABLE)		+= freq_table.o
@@ -47,3 +48,4 @@ obj-$(CONFIG_X86_CPUFREQ_NFORCE2)	+= cpufreq-nforce2.o
 
 # ARM SoC drivers
 obj-$(CONFIG_UX500_SOC_DB8500)		+= db8500-cpufreq.o
+
